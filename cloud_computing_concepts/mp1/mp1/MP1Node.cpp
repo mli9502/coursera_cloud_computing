@@ -54,6 +54,7 @@ int MP1Node::recvLoop() {
  */
 int MP1Node::enqueueWrapper(void *env, char *buff, int size) {
 	Queue q;
+    // This enqueue actually push "buffer" into "env"...
 	return q.enqueue((queue<q_elt> *)env, (void *)buff, size);
 }
 

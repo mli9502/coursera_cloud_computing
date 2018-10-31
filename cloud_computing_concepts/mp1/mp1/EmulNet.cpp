@@ -72,6 +72,7 @@ EmulNet::~EmulNet() {}
 void *EmulNet::ENinit(Address *myaddr, short port) {
 	// Initialize data structures for this member
 	*(int *)(myaddr->addr) = emulnet.nextid++;
+	// FIXME: Is this correct? The port is not being used at all...
     *(short *)(&myaddr->addr[4]) = 0;
 	return myaddr;
 }
@@ -89,6 +90,7 @@ int EmulNet::ENsend(Address *myaddr, Address *toaddr, char *data, int size) {
 	static char temp[2048];
 	int sendmsg = rand() % 100;
 
+	// msg is dropped...
 	if( (emulnet.currbuffsize >= ENBUFFSIZE) || (size + (int)sizeof(en_msg) >= par->MAX_MSG_SIZE) || (par->dropmsg && sendmsg < (int) (par->MSG_DROP_PROB * 100)) ) {
 		return 0;
 	}
@@ -147,7 +149,7 @@ int EmulNet::ENrecv(Address *myaddr, int (* enq)(void *, char *, int), struct ti
 	char* tmp;
 	int sz;
 	en_msg *emsg;
-
+	// Loop through the buffer and find the messages for myaddr.
 	for( i = emulnet.currbuffsize - 1; i >= 0; i-- ) {
 		emsg = emulnet.buff[i];
 
@@ -155,10 +157,10 @@ int EmulNet::ENrecv(Address *myaddr, int (* enq)(void *, char *, int), struct ti
 			sz = emsg->size;
 			tmp = (char *) malloc(sz * sizeof(char));
 			memcpy(tmp, (char *)(emsg+1), sz);
-
+			// remove this msg from the buffer.
 			emulnet.buff[i] = emulnet.buff[emulnet.currbuffsize-1];
 			emulnet.currbuffsize--;
-
+			// put the msg in the queue.
 			(*enq)(queue, (char *)tmp, sz);
 
 			free(emsg);
