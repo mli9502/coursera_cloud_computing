@@ -219,6 +219,9 @@ bool MP1Node::recvCallBack(void *env, char *data, int size ) {
 	/*
 	 * Your code goes here
 	 */
+    cerr << "Received msg type: " << MsgHelper::getMsgTypeStr(MsgHelper::getMsgType(data)) << endl;
+    // TODO: If JOINREQ is received, and the current node is the introducer, we send back a list with fixed number of members to the newly joined node.
+    // TODO: If JOINREP is received, we set env->inGroup member of this node to true. And also set the membership list with the list in this ace msg.
 }
 
 /**
@@ -279,4 +282,19 @@ void MP1Node::printAddress(Address *addr)
 {
     printf("%d.%d.%d.%d:%d \n",  addr->addr[0],addr->addr[1],addr->addr[2],
                                                        addr->addr[3], *(short*)&addr->addr[4]) ;    
+}
+
+const vector<string> MsgHelper::msgTypeStrs {"JOINREQ", "JOINREP", "DUMMYLASTMSGTYPE"};
+
+// Get message type from message.
+MsgTypes MsgHelper::getMsgType(char* data) {
+    MessageHdr* tmp = (MessageHdr*)malloc(sizeof(MessageHdr));
+    memcpy(tmp, data, sizeof(MessageHdr));
+    MsgTypes rtn = tmp->msgType;
+    free(tmp);
+    return rtn;
+} 
+
+string MsgHelper::getMsgTypeStr(MsgTypes mt) {
+    return msgTypeStrs[(size_t)mt];
 }

@@ -78,4 +78,11 @@ public:
 	virtual ~MP1Node();
 };
 
+class MsgHelper {
+public:
+	static const vector<string> msgTypeStrs;
+	static MsgTypes getMsgType(char* data);
+	static string getMsgTypeStr(MsgTypes mt);
+};
+
 #endif /* _MP1NODE_H_ */

@@ -8,6 +8,7 @@
 #***********************
 
 CFLAGS =  -Wall -g -std=c++11
+CFLAGS += -Wno-unused-variable -Wno-format-security -Wno-sign-compare
 
 all: Application
 
