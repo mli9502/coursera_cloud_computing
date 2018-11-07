@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
 	for(auto& addr : addrVec) {
 		cout << addr.getAddress() << endl;
 	}
+	
 #endif
 
 #ifndef TEST
