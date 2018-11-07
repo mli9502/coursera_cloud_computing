@@ -10,7 +10,8 @@
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
  */
-
+const int MP1Node::K = 5;
+const int MP1Node::lambda = 5;
 /**
  * Overloaded Constructor of the MP1Node class
  * You can add new members to the class if you think it
@@ -25,12 +26,23 @@ MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Addres
 	this->log = log;
 	this->par = params;
 	this->memberNode->addr = *address;
+    this->incarnationNum = 0;
+    this->joinList = EntryList<JoinEntry>();
+    this->failList = EntryList<FailEntry>();
 }
 
 /**
  * Destructor of the MP1Node class
  */
 MP1Node::~MP1Node() {}
+
+/**
+ * Get the max count for piggy-back an entry.
+ * This is calculated by (lambda * log(N)).
+ */
+int MP1Node::getMaxPiggybackCnt() {
+    return lambda * std::log2(par->MAX_NNB);
+}
 
 /**
  * FUNCTION NAME: recvLoop

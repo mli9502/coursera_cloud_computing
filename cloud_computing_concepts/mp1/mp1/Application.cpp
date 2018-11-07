@@ -24,7 +24,24 @@ void handler(int sig) {
  *
  * DESCRIPTION: main function. Start from here
  **********************************/
+
+// FIXME: Need to remove this definiation.
+// This is only used for testing.
+#define TEST
+
 int main(int argc, char *argv[]) {
+
+#ifdef TEST
+	vector<Address> addrVec;
+	for(int i = 0; i < 10; i ++) {
+		addrVec.push_back(Address(to_string(i) + ":8080"));
+	}
+	for(auto& addr : addrVec) {
+		cout << addr.getAddress() << endl;
+	}
+#endif
+
+#ifndef TEST
 	//signal(SIGSEGV, handler);
 	if ( argc != ARGS_COUNT ) {
 		cout<<"Configuration (i.e., *.conf) file File Required"<<endl;
@@ -39,6 +56,7 @@ int main(int argc, char *argv[]) {
 	delete(app);
 
 	return SUCCESS;
+#endif
 }
 
 /**
