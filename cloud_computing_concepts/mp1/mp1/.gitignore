@@ -1,3 +1,4 @@
 *.o
 Application
 .vscode/
+.DS_Store
