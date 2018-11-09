@@ -33,13 +33,29 @@ int main(int argc, char *argv[]) {
 
 #ifdef TEST
 	vector<Address> addrVec;
+	string port = "8080";
 	for(int i = 0; i < 10; i ++) {
-		addrVec.push_back(Address(to_string(i) + ":8080"));
+		addrVec.push_back(Address(to_string(i) + ":" + port));
 	}
+	// for(auto& addr : addrVec) {
+	// 	cout << addr.getAddress() << endl;
+	// }
+	EntryList<JoinEntry> el;
 	for(auto& addr : addrVec) {
-		cout << addr.getAddress() << endl;
+		el.insertEntry(JoinEntry(addr));
 	}
-	
+	el.printList();
+	const auto& topK = el.getTopK(5);
+	cout << "-------------------------------------" << endl;
+	for(const auto& entry : topK) {
+		cout << entry << endl;
+	}
+	cout << "-------------------------------------" << endl;
+	el.printList();
+	cout << "-------------------------------------" << endl;
+	el.evictOutdatedEntry(0);
+	el.printList();
+
 #endif
 
 #ifndef TEST

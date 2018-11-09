@@ -67,20 +67,30 @@ public:
 	}
 };
 
-class JoinEntry : Entry {
+class JoinEntry : public Entry {
 public:
 	JoinEntry(Address addr) : Entry(addr) {}
 	~JoinEntry() = default;
+
+	friend ostream& operator<<(ostream& os, const JoinEntry& rhs);
 };
 
-class FailEntry : Entry {
+class FailEntry : public Entry {
+protected:
+	string getFailTypeStr() const {
+		vector<string> failTypeStr {"ALIVE", "SUSPECT", "FAIL"};
+		return failTypeStr[(size_t)type];
+	}
 public:
 	FailTypes type;
+	// NOTE: This incarnationNum is not the same as the member in MP1Node. 
+	// This is received from other nodes.
 	long incarnationNum;
 
 	FailEntry(Address addr, FailTypes type, long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum) {}	
 	~FailEntry() = default;
 
+	friend ostream& operator<<(ostream& os, const FailEntry& rhs);
 	// TODO: Need to provide an update function to override the FailEntry with a new FailEntry. 
 	// When a FailEntry is override, its piggybackCnt is set back to 0.
 };
@@ -98,10 +108,14 @@ public:
 	EntryList() : entryMap(), entryVec() {}
 	~EntryList() {}
 
-	bool insertEntry(T entry) {
-		if(entryMap.find(entry.getAddress()) == entryMap.end()) {
-			cerr << "Found duplicate entry in list: " << entry.getAddress() << endl;
-			return false;
+	// When we insert JoinEntry that we received, we do not replace duplicate.
+	// When we insert FailEntry that we received, if we decide to insert a duplicate entry due to the override rule, we need to replace the duplicate.
+	bool insertEntry(T entry, bool replaceDup = false) {
+		if(entryMap.find(entry.getAddress()) != entryMap.end()) {
+			if(!replaceDup) {
+				cerr << "Found duplicate entry in list: " << entry.getAddress() << endl;
+				return false;
+			}
 		}
 		// Insert the entry at the start of vec, record this address in map.
 		entryVec.insert(entryVec.begin(), entry);
@@ -148,6 +162,12 @@ public:
 		}
 		this->reorderList();
 	}
+	
+	void printList() {
+		for(auto& entry : this->entryVec) {
+			cout << entry << endl;
+		}
+	}
 
 private:
 	/**
@@ -161,6 +181,7 @@ private:
 		while(end <= entryVec.size()) {
 			if(end == entryVec.size()) {
 				std::random_shuffle(entryVec.begin() + start, entryVec.end());
+				end ++;
 			} else if(entryVec[end].piggybackCnt == entryVec[start].piggybackCnt) {
 				end ++;
 			} else {
@@ -169,6 +190,40 @@ private:
 				end ++;
 			}
 		}
+	}
+};
+
+class JoinEntryList : public EntryList<JoinEntry> {
+public:
+	JoinEntryList() : EntryList() {}
+	~JoinEntryList() = default;
+
+	void insertAllEntries(const vector<JoinEntry>& vec) {
+		for(const auto& entry : vec) {
+			insertEntry(entry);
+		}
+	}
+};
+
+class FailEntryList : public EntryList<FailEntry> {
+public:
+	FailEntryList() : EntryList() {}
+	~FailEntryList() = default;
+
+private:
+	bool isOverride(const FailEntry& newEntry, const FailEntry& oldEntry) {
+		auto newType = newEntry.type, oldType = oldEntry.type;
+		auto newIncarnation = newEntry.incarnationNum, oldIncarnation = oldEntry.incarnationNum;
+		if(newType == FailTypes::ALIVE) {
+			return (oldType == FailTypes::SUSPECT && newIncarnation > oldIncarnation) ||
+					(oldType == FailTypes::ALIVE && newIncarnation > oldIncarnation);
+		} else if(newType == FailTypes::SUSPECT) {
+			return (oldType == FailTypes::SUSPECT && newIncarnation > oldIncarnation) ||
+					(oldType == FailTypes::ALIVE && newIncarnation >= oldIncarnation);
+		} else if(newType == FailTypes::FAIL) {
+			return oldType == FailTypes::ALIVE || oldType == FailTypes::SUSPECT;
+		}
+		return false;
 	}
 };
 
@@ -198,7 +253,7 @@ private:
 	// Each entry is piggy-backed at most lambda * log(N) times. Where N = aliveList.size().
 	static const int lambda;
 	// Incarnation number.
-	int incarnationNum;
+	long incarnationNum;
 	// list of members that have joined the list.
 	// entry: address <-> piggy-back cnt.
 	EntryList<JoinEntry> joinList;

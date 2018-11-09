@@ -36,6 +36,6 @@ Member.o: Member.cpp Member.h
 clean:
 	rm -rf *.o Application dbg.log msgcount.log stats.log machine.log
 
-run:
+run: clean
 	$(MAKE) all
 	./Application

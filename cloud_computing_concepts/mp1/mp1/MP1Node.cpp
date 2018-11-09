@@ -7,6 +7,16 @@
 
 #include "MP1Node.h"
 
+ostream& operator<<(ostream& os, const JoinEntry& rhs) {
+	os << const_cast<JoinEntry&>(rhs).getAddress() << ": [piggybackCnt " << rhs.piggybackCnt << "]";
+	return os;
+}
+
+ostream& operator<<(ostream& os, const FailEntry& rhs) {
+	os << const_cast<FailEntry&>(rhs).getAddress() << ": [piggybackCnt " << rhs.piggybackCnt << "], [type " << rhs.getFailTypeStr() << "], [incarnationNum " << rhs.incarnationNum << "]";
+	return os;
+}
+
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
  */
