@@ -37,24 +37,47 @@ int main(int argc, char *argv[]) {
 	for(int i = 0; i < 10; i ++) {
 		addrVec.push_back(Address(to_string(i) + ":" + port));
 	}
-	// for(auto& addr : addrVec) {
-	// 	cout << addr.getAddress() << endl;
-	// }
-	EntryList<JoinEntry> el;
 	for(auto& addr : addrVec) {
-		el.insertEntry(JoinEntry(addr));
+		cout << addr.getAddress() << endl;
 	}
-	el.printList();
-	const auto& topK = el.getTopK(5);
-	cout << "-------------------------------------" << endl;
-	for(const auto& entry : topK) {
-		cout << entry << endl;
+	MembershipList ml;
+	for(auto& addr : addrVec) {
+		ml.insertEntry(MembershipListEntry(addr));
 	}
-	cout << "-------------------------------------" << endl;
-	el.printList();
-	cout << "-------------------------------------" << endl;
-	el.evictOutdatedEntry(0);
-	el.printList();
+	ml.printList();
+	ml.printMap();
+	// cout << "---------------------------------------------" << endl;
+	// for(int i = 0; i < ml.getSize(); i ++) {
+	// 	cout << "select: " << ml.getPingTarget() << " for ping..." << endl;
+	// }
+	// cout << "---------------------------------------------" << endl;
+	// for(int i = 0; i < ml.getSize(); i ++) {
+	// 	cout << "select: " << ml.getPingTarget() << " for ping..." << endl;
+	// }
+	// cout << "---------------------------------------------" << endl;
+	// ml.printList();
+	// cout << "---------------------------------------------" << endl;
+	// auto topK = ml.getTopK(5, 2);
+	// for(auto& entry : topK) {
+	// 	cout << entry << endl;
+	// }
+	// cout << "---------------------------------------------" << endl;
+	// ml.printList();
+	
+	// for(auto& addr : addrVec) {
+	// 	el.insertEntry(JoinEntry(addr));
+	// }
+	// el.printList();
+	// const auto& topK = el.getTopK(5);
+	// cout << "-------------------------------------" << endl;
+	// for(const auto& entry : topK) {
+	// 	cout << entry << endl;
+	// }
+	// cout << "-------------------------------------" << endl;
+	// el.printList();
+	// cout << "-------------------------------------" << endl;
+	// el.evictOutdatedEntry(0);
+	// el.printList();
 
 #endif
 

@@ -16,6 +16,7 @@
 #include "Queue.h"
 
 #include <unordered_map>
+#include <list>
 
 /**
  * Macros
@@ -36,7 +37,7 @@ enum MsgTypes {
     DUMMYLASTMSGTYPE
 };
 
-enum FailTypes {
+enum MemberTypes {
 	ALIVE,
 	SUSPECT,
 	FAIL
@@ -67,62 +68,39 @@ public:
 	}
 };
 
-class JoinEntry : public Entry {
-public:
-	JoinEntry(Address addr) : Entry(addr) {}
-	~JoinEntry() = default;
-
-	friend ostream& operator<<(ostream& os, const JoinEntry& rhs);
-};
-
-class FailEntry : public Entry {
+class MembershipListEntry : public Entry {
 protected:
-	string getFailTypeStr() const {
-		vector<string> failTypeStr {"ALIVE", "SUSPECT", "FAIL"};
-		return failTypeStr[(size_t)type];
+	string getMemberTypeStr() const {
+		vector<string> memberTypeStr {"ALIVE", "SUSPECT", "FAIL"};
+		return memberTypeStr[(size_t)type];
 	}
 public:
-	FailTypes type;
+	MemberTypes type;
 	// NOTE: This incarnationNum is not the same as the member in MP1Node. 
 	// This is received from other nodes.
 	long incarnationNum;
 
-	FailEntry(Address addr, FailTypes type, long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum) {}	
-	~FailEntry() = default;
+	MembershipListEntry(Address addr) : Entry(addr), type(MemberTypes::ALIVE), incarnationNum(0) {}
+	MembershipListEntry(Address addr, MemberTypes type, long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum) {}	
+	~MembershipListEntry() = default;
 
-	friend ostream& operator<<(ostream& os, const FailEntry& rhs);
-	// TODO: Need to provide an update function to override the FailEntry with a new FailEntry. 
-	// When a FailEntry is override, its piggybackCnt is set back to 0.
+	friend ostream& operator<<(ostream& os, const MembershipListEntry& rhs);
 };
-
-// TODO: Need to implement a class template, EntryList, that support lookup by address and getTopK().
-// TODO: Need to have JoinEntryList and FailEntryList inherit EntryList<JoinEntry> and EntryList<FailEntry>.
 
 template <typename T>
 class EntryList {
 public:
 	// key: address, val: index to entryVec.
 	unordered_map<string, typename vector<T>::iterator> entryMap;
+	// TODO:@11/9/2018: Need to change this to list!
+	// If we use vector, when we insert element in the vector, all the iterators after the insertion point will be invalidated!
 	vector<T> entryVec;
 	
 	EntryList() : entryMap(), entryVec() {}
 	~EntryList() {}
 
-	// When we insert JoinEntry that we received, we do not replace duplicate.
-	// When we insert FailEntry that we received, if we decide to insert a duplicate entry due to the override rule, we need to replace the duplicate.
-	bool insertEntry(T entry, bool replaceDup = false) {
-		if(entryMap.find(entry.getAddress()) != entryMap.end()) {
-			if(!replaceDup) {
-				cerr << "Found duplicate entry in list: " << entry.getAddress() << endl;
-				return false;
-			}
-		}
-		// Insert the entry at the start of vec, record this address in map.
-		entryVec.insert(entryVec.begin(), entry);
-		entryMap[entry.getAddress()] = entryVec.begin();
-		// Get the order correct.
-		this->reorderList();
-		return true;
+	int getSize() {
+		return entryVec.size();
 	}
 
 	bool removeEntry(const string& address) {
@@ -132,35 +110,39 @@ public:
 		}
 		entryVec.erase(entryMap[address]);
 		entryMap.erase(address);
-		this->reorderList();
 		return true;
 	}
 	/**
 	 * Get top K entries with smallest piggyback cnt.
 	 * Note that the return may be smaller than K since entryVec may have fewer elements than K.
 	 * The piggyback cnt for these entries are increased at the same time.
+	 * 
+	 * NOTE: we do not remove entries that exceeds piggyback-cnt threshold from the membership list, we simply ignore them.
 	 */
-	vector<T> getTopK(int k) {
+	vector<T> getTopK(int k, int maxPiggybackCnt) {
 		vector<T> rtn;
-		for(int i = 0; i < k && i < entryVec.size(); i ++) {
-			rtn.push_back(entryVec[i]);
-			entryVec[i].incPiggybackCnt();
+		vector<T> tmpVec = entryVec;
+		cout << "after copy" << endl;
+		this->reorderList(tmpVec);
+		cout << "after reorder" << endl;
+		for(auto& entry : tmpVec) {
+			cout << entry << endl;
 		}
-		this->reorderList();
-		return rtn;
-	}
-
-	void evictOutdatedEntry(int maxPiggybackCnt) {
-		for(auto it = entryVec.begin(); it != entryVec.end();) {
-			if(it->reachMaxPiggybackCnt(maxPiggybackCnt)) {
-				entryMap.erase(it->getAddress());
-				cerr << "Evict " << it->getAddress() << " from entry list..." << endl;
-				it = entryVec.erase(it);
-			} else {
-				it ++;
+		for(int i = 0; i < k && i < tmpVec.size(); i ++) {
+			if(tmpVec[i].reachMaxPiggybackCnt(maxPiggybackCnt)) {
+				break;
 			}
+			rtn.push_back(tmpVec[i]);
 		}
-		this->reorderList();
+		cout << "here..." << endl;
+		for(auto& entry : rtn) {
+			cout << entry.getAddress() << endl;
+			if(entryMap.find(entry.getAddress()) == entryMap.end()) {
+				cerr << "entry not found..." << endl;
+			}
+			entryMap[entry.getAddress()]->incPiggybackCnt();
+		}
+		return rtn;
 	}
 	
 	void printList() {
@@ -169,23 +151,29 @@ public:
 		}
 	}
 
+	void printMap() {
+		for(auto& entry : this->entryMap) {
+			cout << entry.first << ": " << *(entry.second) << endl;
+		}
+	}
+
 private:
 	/**
-	 * Update entryVec to have teh correct order.
+	 * Update entryVec to have teh correct order based on piggyback cnt.
 	 */ 
-	void reorderList() {
+	void reorderList(vector<T>& vec) {
 		// First sort all entries by piggyback cnt.
-		sort(entryVec.begin(), entryVec.end());
+		sort(vec.begin(), vec.end());
 		// Then, for the entries with the same piggyback cnt, we shuffle them.
 		int start = 0, end = 0;
-		while(end <= entryVec.size()) {
-			if(end == entryVec.size()) {
-				std::random_shuffle(entryVec.begin() + start, entryVec.end());
+		while(end <= vec.size()) {
+			if(end == vec.size()) {
+				std::random_shuffle(vec.begin() + start, vec.end());
 				end ++;
-			} else if(entryVec[end].piggybackCnt == entryVec[start].piggybackCnt) {
+			} else if(vec[end].piggybackCnt == vec[start].piggybackCnt) {
 				end ++;
 			} else {
-				std::random_shuffle(entryVec.begin() + start, entryVec.begin() + end);
+				std::random_shuffle(vec.begin() + start, vec.begin() + end);
 				start = end;
 				end ++;
 			}
@@ -193,35 +181,68 @@ private:
 	}
 };
 
-class JoinEntryList : public EntryList<JoinEntry> {
+// Membership list.
+class MembershipList : public EntryList<MembershipListEntry> {
 public:
-	JoinEntryList() : EntryList() {}
-	~JoinEntryList() = default;
+	// Index for the last ping target we selected.
+	int lastPingEntryIdx;
+	MembershipList() : EntryList(), lastPingEntryIdx(0) {}
+	~MembershipList() = default;
 
-	void insertAllEntries(const vector<JoinEntry>& vec) {
-		for(const auto& entry : vec) {
-			insertEntry(entry);
+	// Insert membership list entry we received.
+	// If the address of the entry is already present in the list, we update the entry using override rules.
+	// If the address is new, this means that a new entry has joined. And we insert this new entry into a random location in the list.
+	bool insertEntry(MembershipListEntry entry) {
+		cout << "inserting: " << entry << endl;
+		if(entryMap.find(entry.getAddress()) != entryMap.end()) {
+			cerr << "Entry is already presented in membership list: " << endl;
+			cerr << "Entry in list: " << *(entryMap[entry.getAddress()]) << endl;
+			cerr << "Received entry: " << entry << endl;
+			if(isOverride(entry, *(entryMap[entry.getAddress()]))) {
+				cerr << "New entry will override old one..." << endl;
+				*(entryMap[entry.getAddress()]) = entry;
+			}
+		} else {
+			int randIdx = 0;
+			if(!entryVec.empty()) {
+				// Get random number in [left, right].
+				int left = 0, right = entryVec.size() - 1;
+				randIdx = rand() % (right - left + 1) + left;
+			}
+			cerr << "randIdx for insert: " << randIdx << endl;
+			entryVec.insert(entryVec.begin() + randIdx, entry);
+			entryMap[entry.getAddress()] = entryVec.begin() + randIdx;
+			cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+			printMap();
+			cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
 		}
+		return true;
 	}
-};
 
-class FailEntryList : public EntryList<FailEntry> {
-public:
-	FailEntryList() : EntryList() {}
-	~FailEntryList() = default;
+	// Get the ping target and advance lastPingEntryIdx.
+	MembershipListEntry getPingTarget() {
+		auto rtn = entryVec[lastPingEntryIdx];
+		lastPingEntryIdx ++;
+		if(lastPingEntryIdx == entryVec.size()) {
+			lastPingEntryIdx = 0;
+			// shuffle the whole list if we finish one round with it.
+			std::random_shuffle(entryVec.begin(), entryVec.end());
+		}
+		return rtn;
+	}
 
 private:
-	bool isOverride(const FailEntry& newEntry, const FailEntry& oldEntry) {
+	bool isOverride(const MembershipListEntry& newEntry, const MembershipListEntry& oldEntry) {
 		auto newType = newEntry.type, oldType = oldEntry.type;
 		auto newIncarnation = newEntry.incarnationNum, oldIncarnation = oldEntry.incarnationNum;
-		if(newType == FailTypes::ALIVE) {
-			return (oldType == FailTypes::SUSPECT && newIncarnation > oldIncarnation) ||
-					(oldType == FailTypes::ALIVE && newIncarnation > oldIncarnation);
-		} else if(newType == FailTypes::SUSPECT) {
-			return (oldType == FailTypes::SUSPECT && newIncarnation > oldIncarnation) ||
-					(oldType == FailTypes::ALIVE && newIncarnation >= oldIncarnation);
-		} else if(newType == FailTypes::FAIL) {
-			return oldType == FailTypes::ALIVE || oldType == FailTypes::SUSPECT;
+		if(newType == MemberTypes::ALIVE) {
+			return (oldType == MemberTypes::SUSPECT && newIncarnation > oldIncarnation) ||
+					(oldType == MemberTypes::ALIVE && newIncarnation > oldIncarnation);
+		} else if(newType == MemberTypes::SUSPECT) {
+			return (oldType == MemberTypes::SUSPECT && newIncarnation > oldIncarnation) ||
+					(oldType == MemberTypes::ALIVE && newIncarnation >= oldIncarnation);
+		} else if(newType == MemberTypes::FAIL) {
+			return oldType == MemberTypes::ALIVE || oldType == MemberTypes::SUSPECT;
 		}
 		return false;
 	}
@@ -253,18 +274,17 @@ private:
 	// Each entry is piggy-backed at most lambda * log(N) times. Where N = aliveList.size().
 	static const int lambda;
 	// Incarnation number.
+	// Initialized to 0 when node joined. Incremented when it receives a SUSPECT of itself.
 	long incarnationNum;
+	// lastPingAddress.
+	Address* pLastPingAddress;
 	// list of members that have joined the list.
 	// entry: address <-> piggy-back cnt.
-	EntryList<JoinEntry> joinList;
+	// TODO:@11/9/2018: Need to add FailList class.
+	EntryList<MembershipListEntry> failList;
 	// list of members that recently failed.
-	EntryList<FailEntry> failList;
+	MembershipList membershipList;
 	// list of members that are currently alive.
-	// TODO: 
-	// When we add a new entry to joinList, we also have to add this entry to memberNode->memberList.
-	// Similiarly, when we update an entry in failList to ALIVE, we have to update it in memberNode->memberList.
-	// We don't have to delete the entry from failList when we add it to aliveList, because when its piggyback-cnt reach the maximum, it will automatically be removed.
-	// When we get a fail for a member, we remove it from memberNode->memberList.
 	int getMaxPiggybackCnt();
 
 public:

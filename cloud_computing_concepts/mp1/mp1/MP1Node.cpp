@@ -7,13 +7,10 @@
 
 #include "MP1Node.h"
 
-ostream& operator<<(ostream& os, const JoinEntry& rhs) {
-	os << const_cast<JoinEntry&>(rhs).getAddress() << ": [piggybackCnt " << rhs.piggybackCnt << "]";
-	return os;
-}
-
-ostream& operator<<(ostream& os, const FailEntry& rhs) {
-	os << const_cast<FailEntry&>(rhs).getAddress() << ": [piggybackCnt " << rhs.piggybackCnt << "], [type " << rhs.getFailTypeStr() << "], [incarnationNum " << rhs.incarnationNum << "]";
+ostream& operator<<(ostream& os, const MembershipListEntry& rhs) {
+	os << const_cast<MembershipListEntry&>(rhs).getAddress() << ": [piggybackCnt " << rhs.piggybackCnt << "], " << 
+                                                                "[type " << rhs.getMemberTypeStr() << "], " << 
+                                                                "[incarnationNum " << rhs.incarnationNum << "]";
 	return os;
 }
 
@@ -37,8 +34,8 @@ MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Addres
 	this->par = params;
 	this->memberNode->addr = *address;
     this->incarnationNum = 0;
-    this->joinList = EntryList<JoinEntry>();
-    this->failList = EntryList<FailEntry>();
+    this->membershipList = MembershipList();
+    this->failList = EntryList<MembershipListEntry>();
 }
 
 /**
