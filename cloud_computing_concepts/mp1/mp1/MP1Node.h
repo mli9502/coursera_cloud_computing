@@ -93,6 +93,8 @@ public:
 template <typename T>
 class EntryList {
 public:
+	static std::mt19937::result_type SEED;
+
 	// If we use vector, when we insert element in the vector, all the iterators after the insertion point will be invalidated!
 	vector<T> entryVec;
 	
@@ -151,8 +153,6 @@ public:
 			cout << entry << endl;
 		}
 	}
-
-	static std::mt19937::result_type SEED;
 	/**
 	 * Update entryList to have teh correct order based on piggyback cnt.
 	 */ 
@@ -216,6 +216,11 @@ public:
 		int randIdx = 0;
 		if(!entryVec.empty()) {
 			int left = 0, right = entryVec.size() - 1;
+			if(EntryList<MembershipListEntry>::SEED != 0) {
+				srand(static_cast<unsigned>(EntryList<MembershipListEntry>::SEED));
+			} else {
+				srand(time(NULL));
+			}
 			randIdx = rand() % (right - left + 1) + left;
 		}
 		auto it = this->entryVec.begin();
