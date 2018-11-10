@@ -30,7 +30,8 @@ void handler(int sig) {
 #define TEST
 
 int main(int argc, char *argv[]) {
-
+// TODO: Need to use a fix seed for random number generator.
+// TODO: Need to surround debug printout with #define. 
 #ifdef TEST
 	// list<int> test = {1, 2, 3, 4, 5};
 	// shuffle_list<int>(++ test.begin(), -- test.end());
@@ -51,16 +52,16 @@ int main(int argc, char *argv[]) {
 	for(auto& addr : addrVec) {
 		ml.insertEntry(MembershipListEntry(addr));
 	}
-	ml.printList();
-	ml.printMap();
+	ml.printVec();
 
 	cout << "---------------------------------------------" << endl;
 	cout << ml.getSize() << endl;
 	for(int i = 0; i < ml.getSize(); i ++) {
-		cout << "select: " << ml.getPingTarget() << " for ping..." << endl;
+		auto target = MembershipListEntry(Address());
+		ml.getPingTarget(target);
+		cout << "select: " << target << " for ping..." << endl;
 	}
-	ml.printList();
-	ml.printMap();
+	ml.printVec();
 	// cout << "insert node " << numNodes << "..." << endl;
 	// ml.insertEntry(MembershipListEntry(Address(to_string(numNodes) + ":" + port)));
 	// cout << "---------------------------------------------" << endl;
@@ -70,26 +71,22 @@ int main(int argc, char *argv[]) {
 	// cout << "---------------------------------------------" << endl;
 	// ml.printList();
 	// ml.printMap();
-	// cout << "---------------------------------------------" << endl;
+	cout << "---------------------------------------------" << endl;
 
-	// auto topK = ml.getTopK(5, 2);
-	// for(auto& entry : topK) {
-	// 	cout << entry << endl;
-	// }
-	// cout << "---------------------------------------------" << endl;
-	// ml.printList();
+	auto topK = ml.getTopK(5, 2);
+	for(auto& entry : topK) {
+		cout << entry << endl;
+	}
+	cout << "---------------------------------------------" << endl;
+	ml.printVec();
 	
-	// for(auto& addr : addrVec) {
-	// 	el.insertEntry(JoinEntry(addr));
-	// }
-	// el.printList();
-	// const auto& topK = el.getTopK(5);
-	// cout << "-------------------------------------" << endl;
-	// for(const auto& entry : topK) {
-	// 	cout << entry << endl;
-	// }
-	// cout << "-------------------------------------" << endl;
-	// el.printList();
+	topK = ml.getTopK(3, 2);
+	cout << "---------------------------------------------" << endl;
+	for(const auto& entry : topK) {
+		cout << entry << endl;
+	}
+	cout << "-------------------------------------" << endl;
+	ml.printVec();
 	// cout << "-------------------------------------" << endl;
 	// el.evictOutdatedEntry(0);
 	// el.printList();
