@@ -34,6 +34,7 @@ MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Addres
 	this->par = params;
 	this->memberNode->addr = *address;
     this->incarnationNum = 0;
+    this->pLastPingAddress = nullptr;
     this->membershipList = MembershipList();
     this->failList = EntryList<MembershipListEntry>();
 }

@@ -32,9 +32,16 @@ void handler(int sig) {
 int main(int argc, char *argv[]) {
 
 #ifdef TEST
+	// list<int> test = {1, 2, 3, 4, 5};
+	// shuffle_list<int>(++ test.begin(), -- test.end());
+	// for(auto val : test) {
+	// 	cout << val << ", ";
+	// }
+	// cout << endl;
 	vector<Address> addrVec;
 	string port = "8080";
-	for(int i = 0; i < 10; i ++) {
+	int numNodes = 10;
+	for(int i = 0; i < numNodes; i ++) {
 		addrVec.push_back(Address(to_string(i) + ":" + port));
 	}
 	for(auto& addr : addrVec) {
@@ -46,17 +53,25 @@ int main(int argc, char *argv[]) {
 	}
 	ml.printList();
 	ml.printMap();
-	// cout << "---------------------------------------------" << endl;
-	// for(int i = 0; i < ml.getSize(); i ++) {
-	// 	cout << "select: " << ml.getPingTarget() << " for ping..." << endl;
-	// }
+
+	cout << "---------------------------------------------" << endl;
+	cout << ml.getSize() << endl;
+	for(int i = 0; i < ml.getSize(); i ++) {
+		cout << "select: " << ml.getPingTarget() << " for ping..." << endl;
+	}
+	ml.printList();
+	ml.printMap();
+	// cout << "insert node " << numNodes << "..." << endl;
+	// ml.insertEntry(MembershipListEntry(Address(to_string(numNodes) + ":" + port)));
 	// cout << "---------------------------------------------" << endl;
 	// for(int i = 0; i < ml.getSize(); i ++) {
 	// 	cout << "select: " << ml.getPingTarget() << " for ping..." << endl;
 	// }
 	// cout << "---------------------------------------------" << endl;
 	// ml.printList();
+	// ml.printMap();
 	// cout << "---------------------------------------------" << endl;
+
 	// auto topK = ml.getTopK(5, 2);
 	// for(auto& entry : topK) {
 	// 	cout << entry << endl;

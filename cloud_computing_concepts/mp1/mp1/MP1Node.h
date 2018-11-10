@@ -17,6 +17,7 @@
 
 #include <unordered_map>
 #include <list>
+#include <random>
 
 /**
  * Macros
@@ -27,6 +28,17 @@
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
  */
+
+// helper function to shuffle the list...
+template <typename T> 
+void shuffle_list(typename list<T>::iterator begin, typename list<T>::iterator end) {
+    // create a vector of (wrapped) references to elements in the list
+    // http://en.cppreference.com/w/cpp/utility/functional/reference_wrapper
+    std::vector<T> vec(begin, end);
+    // shuffle (the references in) the vector
+    std::shuffle(vec.begin(), vec.end(), std::mt19937{std::random_device{}()});
+	std::copy(vec.begin(), vec.end(), begin);
+}
 
 /**
  * Message Types
@@ -90,17 +102,17 @@ public:
 template <typename T>
 class EntryList {
 public:
-	// key: address, val: index to entryVec.
-	unordered_map<string, typename vector<T>::iterator> entryMap;
+	// key: address, val: index to entryList.
+	unordered_map<string, typename list<T>::iterator> entryMap;
 	// TODO:@11/9/2018: Need to change this to list!
 	// If we use vector, when we insert element in the vector, all the iterators after the insertion point will be invalidated!
-	vector<T> entryVec;
+	list<T> entryList;
 	
-	EntryList() : entryMap(), entryVec() {}
+	EntryList() : entryMap(), entryList() {}
 	~EntryList() {}
 
 	int getSize() {
-		return entryVec.size();
+		return entryList.size();
 	}
 
 	bool removeEntry(const string& address) {
@@ -108,45 +120,49 @@ public:
 			cerr << "Address " << address << " is not in list..." << endl;
 			return false; 
 		}
-		entryVec.erase(entryMap[address]);
+		entryList.erase(entryMap[address]);
 		entryMap.erase(address);
 		return true;
 	}
 	/**
 	 * Get top K entries with smallest piggyback cnt.
-	 * Note that the return may be smaller than K since entryVec may have fewer elements than K.
+	 * Note that the return may be smaller than K since entryList may have fewer elements than K.
 	 * The piggyback cnt for these entries are increased at the same time.
 	 * 
 	 * NOTE: we do not remove entries that exceeds piggyback-cnt threshold from the membership list, we simply ignore them.
 	 */
 	vector<T> getTopK(int k, int maxPiggybackCnt) {
+		// FIXME: We need to remove the map...
+		// When we sort the list, we sort it using list<pair<T, typename list<T>::iterator>> so we can latter easily access those elements in origional list.
 		vector<T> rtn;
-		vector<T> tmpVec = entryVec;
+		list<T> tmpList = entryList;
 		cout << "after copy" << endl;
-		this->reorderList(tmpVec);
+		this->reorderList(tmpList);
 		cout << "after reorder" << endl;
-		for(auto& entry : tmpVec) {
+		for(auto& entry : tmpList) {
 			cout << entry << endl;
 		}
-		for(int i = 0; i < k && i < tmpVec.size(); i ++) {
-			if(tmpVec[i].reachMaxPiggybackCnt(maxPiggybackCnt)) {
+		auto it = tmpList.begin();
+		while(rtn.size() < k && it != tmpList.end()) {
+			if(it->reachMaxPiggybackCnt(maxPiggybackCnt)) {
 				break;
 			}
-			rtn.push_back(tmpVec[i]);
+			rtn.push_back(*it);
+			it ++;
 		}
 		cout << "here..." << endl;
 		for(auto& entry : rtn) {
 			cout << entry.getAddress() << endl;
-			if(entryMap.find(entry.getAddress()) == entryMap.end()) {
-				cerr << "entry not found..." << endl;
-			}
+			// if(entryMap.find(entry.getAddress()) == entryMap.end()) {
+			// 	cerr << "entry not found..." << endl;
+			// }
 			entryMap[entry.getAddress()]->incPiggybackCnt();
 		}
 		return rtn;
 	}
 	
 	void printList() {
-		for(auto& entry : this->entryVec) {
+		for(auto& entry : this->entryList) {
 			cout << entry << endl;
 		}
 	}
@@ -159,23 +175,23 @@ public:
 
 private:
 	/**
-	 * Update entryVec to have teh correct order based on piggyback cnt.
+	 * Update entryList to have teh correct order based on piggyback cnt.
 	 */ 
-	void reorderList(vector<T>& vec) {
+	void reorderList(list<T>& inputList) {
 		// First sort all entries by piggyback cnt.
-		sort(vec.begin(), vec.end());
+		sort(inputList.begin(), inputList.end());
 		// Then, for the entries with the same piggyback cnt, we shuffle them.
-		int start = 0, end = 0;
-		while(end <= vec.size()) {
-			if(end == vec.size()) {
-				std::random_shuffle(vec.begin() + start, vec.end());
-				end ++;
-			} else if(vec[end].piggybackCnt == vec[start].piggybackCnt) {
-				end ++;
+		auto startIt = inputList.begin(), endIt = inputList.begin();
+		while(true) {
+			if(endIt == inputList.end()) {
+				shuffle_list<T>(startIt, endIt);
+				break;
+			} else if(endIt->piggybackCnt == startIt->piggybackCnt) {
+				endIt ++;
 			} else {
-				std::random_shuffle(vec.begin() + start, vec.begin() + end);
-				start = end;
-				end ++;
+				shuffle_list<T>(startIt, endIt);
+				startIt = endIt;
+				endIt ++;
 			}
 		}
 	}
@@ -185,8 +201,8 @@ private:
 class MembershipList : public EntryList<MembershipListEntry> {
 public:
 	// Index for the last ping target we selected.
-	int lastPingEntryIdx;
-	MembershipList() : EntryList(), lastPingEntryIdx(0) {}
+	list<MembershipListEntry>::iterator lastPingIt;
+	MembershipList() : EntryList(), lastPingIt(entryList.end()) {}
 	~MembershipList() = default;
 
 	// Insert membership list entry we received.
@@ -204,30 +220,35 @@ public:
 			}
 		} else {
 			int randIdx = 0;
-			if(!entryVec.empty()) {
+			if(!entryList.empty()) {
 				// Get random number in [left, right].
-				int left = 0, right = entryVec.size() - 1;
+				int left = 0, right = entryList.size() - 1;
 				randIdx = rand() % (right - left + 1) + left;
 			}
 			cerr << "randIdx for insert: " << randIdx << endl;
-			entryVec.insert(entryVec.begin() + randIdx, entry);
-			entryMap[entry.getAddress()] = entryVec.begin() + randIdx;
-			cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-			printMap();
-			cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
+			auto it = entryList.begin();		
+			for(int i = 0; i < randIdx; i ++) {
+				it ++;
+			}
+			entryList.insert(it, entry);
+			// printList();
+			entryMap[entry.getAddress()] = --it;
+			// cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+			// printMap();
+			// cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl;
 		}
 		return true;
 	}
 
 	// Get the ping target and advance lastPingEntryIdx.
 	MembershipListEntry getPingTarget() {
-		auto rtn = entryVec[lastPingEntryIdx];
-		lastPingEntryIdx ++;
-		if(lastPingEntryIdx == entryVec.size()) {
-			lastPingEntryIdx = 0;
+		if(lastPingIt == entryList.end()) {
 			// shuffle the whole list if we finish one round with it.
-			std::random_shuffle(entryVec.begin(), entryVec.end());
+			shuffle_list<MembershipListEntry>(entryList.begin(), entryList.end());
+			lastPingIt = entryList.begin();
 		}
+		auto rtn = *lastPingIt;
+		lastPingIt ++;
 		return rtn;
 	}
 
