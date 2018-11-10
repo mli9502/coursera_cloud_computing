@@ -19,6 +19,8 @@
 #include <list>
 #include <random>
 
+// #define TEST
+
 /**
  * Macros
  */
@@ -125,11 +127,13 @@ public:
 			tmpVec.push_back({entryVec[i], i});
 		}
 		this->reorderVec(tmpVec);
+#ifdef TEST
 		cout << "+++++++++++++++++++++++++++++" << endl;
 		for(auto& entry : tmpVec) {
 			cout << entry.first << endl;
 		}
 		cout << "+++++++++++++++++++++++++++++" << endl;
+#endif
 		auto it = tmpVec.begin();
 		while(rtn.size() < k && it != tmpVec.end()) {
 			if(it->first.reachMaxPiggybackCnt(maxPiggybackCnt)) {
@@ -148,7 +152,7 @@ public:
 		}
 	}
 
-private:
+	static std::mt19937::result_type SEED;
 	/**
 	 * Update entryList to have teh correct order based on piggyback cnt.
 	 */ 
@@ -160,18 +164,29 @@ private:
 		auto startIt = vec.begin(), endIt = vec.begin();
 		while(true) {
 			if(endIt == vec.end()) {
-				std::random_shuffle(startIt, endIt);
+				if(SEED != 0) {
+					std::shuffle(startIt, endIt, std::mt19937{SEED});
+				} else {
+					std::shuffle(startIt, endIt, std::mt19937{std::random_device{}()});
+				}
 				break;
 			} else if(endIt->first.piggybackCnt == startIt->first.piggybackCnt) {
 				endIt ++;
 			} else {
-				std::random_shuffle(startIt, endIt);
+				if(SEED != 0) {
+					std::shuffle(startIt, endIt, std::mt19937{SEED});
+				} else {
+					std::shuffle(startIt, endIt, std::mt19937{std::random_device{}()});
+				}
 				startIt = endIt;
 				endIt ++;
 			}
 		}
 	}
 };
+
+template<typename T>
+std::mt19937::result_type EntryList<T>::SEED = 0;
 
 // Membership list.
 class MembershipList : public EntryList<MembershipListEntry> {
@@ -185,7 +200,7 @@ public:
 	// If the address of the entry is already present in the list, we update the entry using override rules.
 	// If the address is new, this means that a new entry has joined. And we insert this new entry into a random location in the list.
 	bool insertEntry(MembershipListEntry newEntry) {
-		cout << "inserting: " << newEntry << endl;
+		cerr << "inserting: " << newEntry << endl;
 		for(auto& entry : this->entryVec) {
 			if(newEntry.getAddress() == entry.getAddress()) {
 				cerr << "Entry is already presented in membership list: " << endl;
@@ -216,7 +231,11 @@ public:
 			return false;
 		}
 		if(lastPingIdx == entryVec.size()) {
-    		std::shuffle(entryVec.begin(), entryVec.end(), std::mt19937{std::random_device{}()});
+			if(EntryList<MembershipListEntry>::SEED != 0) {
+				std::shuffle(entryVec.begin(), entryVec.end(), std::mt19937{EntryList<MembershipListEntry>::SEED});
+			} else {
+				std::shuffle(entryVec.begin(), entryVec.end(), std::mt19937{std::random_device{}()});
+			}
 			lastPingIdx = 0;
 		}
 		rtn = entryVec[lastPingIdx];
