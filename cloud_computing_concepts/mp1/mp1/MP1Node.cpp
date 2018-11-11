@@ -7,6 +7,8 @@
 
 #include "MP1Node.h"
 
+long FailListEntry::MAX_LIVE_TIME = 5000;
+
 ostream& operator<<(ostream& os, const MembershipListEntry& rhs) {
 	os << const_cast<MembershipListEntry&>(rhs).getAddress() << ": [piggybackCnt " << rhs.piggybackCnt << "], " << 
                                                                 "[type " << rhs.getMemberTypeStr() << "], " << 
@@ -36,7 +38,7 @@ MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Addres
     this->incarnationNum = 0;
     this->pLastPingAddress = nullptr;
     this->membershipList = MembershipList();
-    this->failList = EntryList<MembershipListEntry>();
+    this->failList = FailList();
 }
 
 /**

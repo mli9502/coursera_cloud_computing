@@ -26,6 +26,7 @@
  */
 #define TREMOVE 20
 #define TFAIL 5
+#define SEED_CONST 0
 
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
@@ -37,7 +38,14 @@
 enum MsgTypes {
     JOINREQ,
     JOINREP,
-    DUMMYLASTMSGTYPE
+	// ping msg.
+    PING,
+	// ack msg.
+	ACK,
+	// ping-req msg.
+	PING_REQ,
+	// ack-req msg.
+	ACK_REQ
 };
 
 enum MemberTypes {
@@ -90,6 +98,18 @@ public:
 	friend ostream& operator<<(ostream& os, const MembershipListEntry& rhs);
 };
 
+class FailListEntry : public Entry {
+public:
+	static long MAX_LIVE_TIME;
+
+	MemberTypes type;
+	long evictTimeout;	
+
+	FailListEntry(Address addr) : Entry(addr), type(MemberTypes::FAIL), evictTimeout(0) {}
+	FailListEntry(const Entry& entry) : Entry(entry.addr), type(MemberTypes::FAIL), evictTimeout(0) {}
+	~FailListEntry() = default;
+};
+
 template <typename T>
 class EntryList {
 public:
@@ -115,6 +135,11 @@ public:
 		cerr << "Address " << address << " is not in list..." << endl;
 		return false; 
 	}
+
+	char* genTopKMsg(int k, int maxPiggybackCnt) {
+		// vector<T> 
+	}
+
 	/**
 	 * Get top K entries with smallest piggyback cnt.
 	 * Note that the return may be smaller than K since entryList may have fewer elements than K.
@@ -186,7 +211,7 @@ public:
 };
 
 template<typename T>
-std::mt19937::result_type EntryList<T>::SEED = 0;
+std::mt19937::result_type EntryList<T>::SEED = SEED_CONST;
 
 // Membership list.
 class MembershipList : public EntryList<MembershipListEntry> {
@@ -265,6 +290,33 @@ private:
 	}
 };
 
+// Fail list
+class FailList : public EntryList<FailListEntry> {
+public:
+	FailList() : EntryList() {}
+	~FailList() = default;
+
+	bool insertEntry(MembershipListEntry newEntry) {
+		entryVec.push_back(FailListEntry(newEntry));
+		entryVec.back().piggybackCnt = 0;
+		return true;
+	}
+
+	/**
+	 * Fail entry is only kept in the list for a given period.
+	 * After this period, they are removed.
+	 */
+	void evictTimeoutEntries() {
+		for(auto it = entryVec.begin(); it != entryVec.end(); ) {
+			if(it->evictTimeout >= FailListEntry::MAX_LIVE_TIME) {
+				it = entryVec.erase(it);
+			} else {
+				it ++;
+			}
+		}
+	}
+};
+
 /**
  * STRUCT NAME: MessageHdr
  *
@@ -295,10 +347,8 @@ private:
 	long incarnationNum;
 	// lastPingAddress.
 	Address* pLastPingAddress;
-	// list of members that have joined the list.
-	// entry: address <-> piggy-back cnt.
-	// TODO:@11/9/2018: Need to add FailList class.
-	EntryList<MembershipListEntry> failList;
+	// list of members that have been failed recently.
+	FailList failList;
 	// list of members that recently failed.
 	MembershipList membershipList;
 	// list of members that are currently alive.
