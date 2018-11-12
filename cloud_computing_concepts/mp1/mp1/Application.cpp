@@ -31,12 +31,6 @@ void handler(int sig) {
 
 int main(int argc, char *argv[]) {
 #ifdef TEST
-	// list<int> test = {1, 2, 3, 4, 5};
-	// shuffle_list<int>(++ test.begin(), -- test.end());
-	// for(auto val : test) {
-	// 	cout << val << ", ";
-	// }
-	// cout << endl;
 	vector<Address> addrVec;
 	string port = "8080";
 	int numNodes = 10;
@@ -77,10 +71,10 @@ int main(int argc, char *argv[]) {
 	}
 	cout << "----- Membership list after getTopK -----" << endl;
 	ml.printVec();
-	// cout << "-------------------------------------" << endl;
-	// el.evictOutdatedEntry(0);
-	// el.printList();
+	cout << "----- Test getEntryMsg and decodeEntrymsg -----" << endl;
+	cout << MembershipListEntry::decodeEntryMsg(topK[0].getEntryMsg()) << endl;
 
+	// TODO:@11/12/2018: Test encode and decode multiple messages.
 #endif
 
 #ifndef TEST

@@ -16,6 +16,11 @@ ostream& operator<<(ostream& os, const MembershipListEntry& rhs) {
 	return os;
 }
 
+ostream& operator<<(ostream& os, const FailListEntry& rhs) {
+    os << const_cast<FailListEntry&>(rhs).getAddress() << ": FAIL";
+    return os;
+}
+
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
  */

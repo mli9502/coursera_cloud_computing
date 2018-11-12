@@ -55,12 +55,19 @@ enum MemberTypes {
 };
 
 class Entry {
+protected:
+	// Msg representation for this entry.
+	char* entryMsg;
 public:
 	Address addr;
 	int piggybackCnt;
 
-	Entry(Address addr) : addr(addr), piggybackCnt(0) {}
-	virtual ~Entry() = default;
+	Entry(Address addr) : entryMsg(nullptr), addr(addr), piggybackCnt(0) {}
+	virtual ~Entry() {
+		if(entryMsg) {
+			delete [] entryMsg;
+		}
+	}
 
 	bool operator<(const Entry& rhs) const {
 		return piggybackCnt < rhs.piggybackCnt;
@@ -95,6 +102,41 @@ public:
 	MembershipListEntry(Address addr, MemberTypes type, long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum) {}	
 	~MembershipListEntry() = default;
 
+	// Get the size of this entry in a message.
+	static unsigned getEntrySize() {
+		// Address|MemberTypes|incarnationNum
+		return sizeof(Address) + sizeof(MemberTypes) + sizeof(long);
+	}
+
+	// Convert this entry into char* message.
+	char* getEntryMsg() {
+		// First clear this msg.
+		if(entryMsg != nullptr) {
+			delete [] entryMsg;
+		}
+		entryMsg = new char[getEntrySize()];
+		auto msgPtr = entryMsg;
+		memcpy(msgPtr, &(this->addr), sizeof(Address));
+		msgPtr += sizeof(Address);
+		memcpy(msgPtr, &(this->type), sizeof(MemberTypes));
+		msgPtr += sizeof(MemberTypes);
+		memcpy(msgPtr, &(this->incarnationNum), sizeof(long));
+		return entryMsg;
+	}
+
+	// Convert a msg back to entry.
+	static MembershipListEntry decodeEntryMsg(char* msg) {
+		Address addr;
+		MemberTypes type;
+		long incarnationNum = 0;
+		memcpy(&addr, msg, sizeof(Address));
+		msg += sizeof(Address);
+		memcpy(&type, msg, sizeof(MemberTypes));
+		msg += sizeof(MemberTypes);
+		memcpy(&incarnationNum, msg, sizeof(long));
+		return MembershipListEntry(addr, type, incarnationNum);
+	}
+
 	friend ostream& operator<<(ostream& os, const MembershipListEntry& rhs);
 };
 
@@ -108,18 +150,58 @@ public:
 	FailListEntry(Address addr) : Entry(addr), type(MemberTypes::FAIL), evictTimeout(0) {}
 	FailListEntry(const Entry& entry) : Entry(entry.addr), type(MemberTypes::FAIL), evictTimeout(0) {}
 	~FailListEntry() = default;
+
+	// Get the size of this entry in a message.
+	static unsigned getEntrySize() {
+		// Address|MemberTypes
+		// Note that although we include the type in the message, the type will always be FAIL.
+		return sizeof(Address) + sizeof(MemberTypes);
+	}
+
+	// Convert this entry into char* message.
+	char* getEntryMsg() {
+		// First clear this msg.
+		if(entryMsg != nullptr) {
+			delete [] entryMsg;
+		}
+		entryMsg = new char[getEntrySize()];
+		auto msgPtr = entryMsg;
+		memcpy(msgPtr, &(this->addr), sizeof(Address));
+		msgPtr += sizeof(Address);
+		memcpy(msgPtr, &(this->type), sizeof(MemberTypes));
+		return entryMsg;
+	}
+
+	// Convert a msg back to entry.
+	static FailListEntry decodeEntryMsg(char* msg) {
+		Address addr;
+		MemberTypes type;
+		long incarnationNum = 0;
+		memcpy(&addr, msg, sizeof(Address));
+		msg += sizeof(Address);
+		memcpy(&type, msg, sizeof(MemberTypes));
+		return FailListEntry(addr);
+	}
+
+	friend ostream& operator<<(ostream& os, const FailListEntry& rhs);
 };
 
 template <typename T>
 class EntryList {
+protected:
+	char* topKMsg;
 public:
 	static std::mt19937::result_type SEED;
 
 	// If we use vector, when we insert element in the vector, all the iterators after the insertion point will be invalidated!
 	vector<T> entryVec;
 	
-	EntryList() : entryVec() {}
-	~EntryList() {}
+	EntryList() : topKMsg(nullptr), entryVec() {}
+	~EntryList() {
+		if(topKMsg) {
+			delete [] topKMsg;
+		}
+	}
 
 	int getSize() {
 		return entryVec.size();
@@ -135,9 +217,44 @@ public:
 		cerr << "Address " << address << " is not in list..." << endl;
 		return false; 
 	}
+	// number_of_entries|entry|entry|...
+	pair<unsigned, char*> genTopKMsg(int k, int maxPiggybackCnt) {
+		if(this->topKMsg) {
+			delete [] this->topKMsg;
+		}
+		vector<T> topEntries = this->getTopK(k, maxPiggybackCnt);
+		vector<pair<unsigned, char*>> topMsgs;
+		for(auto& entry : topEntries) {
+			topMsgs.push_back(make_pair(entry.getEntrySize(), entry.getEntryMsg()));
+		}
+		unsigned numMsgs = topMsgs.size();
+		// get total msg size.
+		unsigned msgSize = sizeof(unsigned);
+		for(auto& entry : topMsgs) {
+			msgSize += entry.first;
+		}
+		this->topKMsg = new char[msgSize];
+		auto tmpPtr = topKMsg;
+		memcpy(tmpPtr, &numMsgs, sizeof(unsigned));
+		tmpPtr += sizeof(unsigned);
+		for(auto& entry : topMsgs) {
+			memcpy(tmpPtr, entry.second, entry.first);
+			tmpPtr += entry.first;
+		}
+		return make_pair(msgSize, this->topKMsg);
+	}
 
-	char* genTopKMsg(int k, int maxPiggybackCnt) {
-		// vector<T> 
+	static vector<T> decodeTopKMsg(char* msg) {
+		unsigned numEntries = 0;
+		memcpy(&numEntries, msg, sizeof(unsigned));
+		msg += sizeof(unsigned);
+		unsigned entrySize = T::getEntrySize();
+		vector<T> rtn;
+		for(unsigned i = 0; i < numEntries; i ++) {
+			rtn.push_back(T::decodeEntryMsg(msg));
+			msg += entrySize;
+		}
+		return rtn;
 	}
 
 	/**
@@ -232,7 +349,8 @@ public:
 				cerr << "Entry in list: " << entry << endl;
 				cerr << "Received entry: " << newEntry << endl;
 				if(isOverride(newEntry, entry)) {
-					entry = newEntry;
+					entry.type = newEntry.type;
+					entry.incarnationNum = newEntry.incarnationNum;
 					return true;
 				}
 				return false;
@@ -297,6 +415,13 @@ public:
 	~FailList() = default;
 
 	bool insertEntry(MembershipListEntry newEntry) {
+		for(auto& entry : entryVec) {
+			if(newEntry.getAddress() == entry.getAddress()) {
+				cerr << "Entry is already marked as failed..." << endl;
+				cerr << entry << endl;
+				return false;
+			}
+		}
 		entryVec.push_back(FailListEntry(newEntry));
 		entryVec.back().piggybackCnt = 0;
 		return true;
