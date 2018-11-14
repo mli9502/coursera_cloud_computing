@@ -19,7 +19,7 @@
 #include <list>
 #include <random>
 
-// #define TEST
+#define TEST
 
 /**
  * Macros
@@ -40,12 +40,10 @@ enum MsgTypes {
     JOINREP,
 	// ping msg.
     PING,
-	// ack msg.
-	ACK,
 	// ping-req msg.
 	PING_REQ,
-	// ack-req msg.
-	ACK_REQ
+	// ack msg.
+	ACK
 };
 
 enum MemberTypes {
@@ -223,6 +221,13 @@ public:
 			delete [] this->topKMsg;
 		}
 		vector<T> topEntries = this->getTopK(k, maxPiggybackCnt);
+#ifdef TEST
+		cout << "----------------------------------------" << endl;
+		for(auto& entry : topEntries) {
+			cout << entry << endl;
+		}
+		cout << "----------------------------------------" << endl;
+#endif
 		vector<pair<unsigned, char*>> topMsgs;
 		for(auto& entry : topEntries) {
 			topMsgs.push_back(make_pair(entry.getEntrySize(), entry.getEntryMsg()));
@@ -247,8 +252,14 @@ public:
 	static vector<T> decodeTopKMsg(char* msg) {
 		unsigned numEntries = 0;
 		memcpy(&numEntries, msg, sizeof(unsigned));
+#ifdef TEST
+		cout << "numEntries: " << numEntries << endl;
+#endif
 		msg += sizeof(unsigned);
 		unsigned entrySize = T::getEntrySize();
+#ifdef TEST
+		cout << "entrySize: " << entrySize << endl;
+#endif
 		vector<T> rtn;
 		for(unsigned i = 0; i < numEntries; i ++) {
 			rtn.push_back(T::decodeEntryMsg(msg));
@@ -373,7 +384,7 @@ public:
 	}
 
 	// Get the ping target and advance lastPingEntryIdx.
-	bool getPingTarget(MembershipListEntry& rtn) {
+	bool getPingTarget(MembershipListEntry& rtn, const Address& selfAddr) {
 		if(entryVec.empty()) {
 			cerr << "Membership list is currently empty!" << endl;
 			return false;
@@ -385,6 +396,11 @@ public:
 				std::shuffle(entryVec.begin(), entryVec.end(), std::mt19937{std::random_device{}()});
 			}
 			lastPingIdx = 0;
+		}
+		// If the next entry is the current node itself, ignore it.
+		if(entryVec[lastPingIdx].addr == selfAddr) {
+			lastPingIdx ++;
+			return getPingTarget(rtn, selfAddr);
 		}
 		rtn = entryVec[lastPingIdx];
 		lastPingIdx ++;
@@ -463,15 +479,28 @@ private:
 	Params *par;
 	Member *memberNode;
 	char NULLADDR[6];
-	// Every time, K entries from joinList, and faileList are selected for piggyback to the msg.
+	// TODO: Protocal period.
+	// PROTOCOL_PERIOD = PING_TIMEOUT + PING_REQ_TIMEOUT + 1 = 3 * RTT + 1 = 7.
+	static const long PROTOCOL_PERIOD;
+	// Ping timeout.
+	// PING_TIMEOUT = RTT = 2 for now.
+	static const long PING_TIMEOUT;
+	// Ping-req timeout.
+	// PING_REQ_TIMEOUT = 2 * PING_TIMEOUT = 4 for now.
+	static const long PING_REQ_TIMEOUT;
+
+	// Every time, K entries from MembershipList, and FailList are selected for piggyback to the msg.
 	static const int K;
 	// Each entry is piggy-backed at most lambda * log(N) times. Where N = aliveList.size().
 	static const int lambda;
+	// TODO: We use this to count ping_req timeout.
+	long pingReqTimeoutCounter;
+
 	// Incarnation number.
 	// Initialized to 0 when node joined. Incremented when it receives a SUSPECT of itself.
+	// When a SUSPECT msg on the node itself comes, insert this node into membership list with piggybackCnt 0, type ALIVE and the updated incarnation number.
+	// By doing this, the ALIVE information is send to other nodes. 
 	long incarnationNum;
-	// lastPingAddress.
-	Address* pLastPingAddress;
 	// list of members that have been failed recently.
 	FailList failList;
 	// list of members that recently failed.
@@ -499,6 +528,10 @@ public:
 	void initMemberListTable(Member *memberNode);
 	void printAddress(Address *addr);
 	virtual ~MP1Node();
+
+	char* genPingMsg(MembershipListEntry to);
+	char* genPingReqMsg(MembershipListEntry to, MembershipListEntry req);
+	char* genAckMsg(MembershipListEntry to);
 };
 
 class MsgHelper {

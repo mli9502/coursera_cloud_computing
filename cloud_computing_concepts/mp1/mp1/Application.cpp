@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 	cout << "----- Select " << ml.getSize() << " targets for ping -----" << endl;
 	for(int i = 0; i < ml.getSize() + 1; i ++) {
 		auto target = MembershipListEntry(Address());
-		ml.getPingTarget(target);
+		ml.getPingTarget(target, Address());
 		cout << "select: " << target << " for ping..." << endl;
 	}
 	ml.printVec();
@@ -74,7 +74,13 @@ int main(int argc, char *argv[]) {
 	cout << "----- Test getEntryMsg and decodeEntrymsg -----" << endl;
 	cout << MembershipListEntry::decodeEntryMsg(topK[0].getEntryMsg()) << endl;
 
-	// TODO:@11/12/2018: Test encode and decode multiple messages.
+	cout << "----- Test genTopKMsg and decodeTopKMsg -----" << endl;
+	auto msgPair = ml.genTopKMsg(3, 2);
+	cout << msgPair.first << endl;
+	auto decodedEntries = MembershipList::decodeTopKMsg(msgPair.second);
+	for(auto& decodedEntry : decodedEntries) {
+		cout << decodedEntry << endl;
+	}
 #endif
 
 #ifndef TEST

@@ -101,8 +101,10 @@ public:
 	// the node's own heartbeat
 	long heartbeat;
 	// counter for next ping
+	// TODO: We use this count to check PROTOCOL_PERIOD.
 	int pingCounter;
 	// counter for ping timeout
+	// TODO: We use this to count ping timeout.
 	int timeOutCounter;
 	// Membership table
 	vector<MemberListEntry> memberList;
