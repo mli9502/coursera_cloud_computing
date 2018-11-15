@@ -507,6 +507,12 @@ private:
 	MembershipList membershipList;
 	// list of members that are currently alive.
 	int getMaxPiggybackCnt();
+	// Count for protocol period.
+	// This count is needed to form the ID for a message.
+	// The ID is IP:PORT:PERIOD_CNT
+	unsigned long periodCnt;
+
+	unordered_map<string, Address> pingReqMap;
 
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
@@ -529,9 +535,13 @@ public:
 	void printAddress(Address *addr);
 	virtual ~MP1Node();
 
-	char* genPingMsg(MembershipListEntry to);
-	char* genPingReqMsg(MembershipListEntry to, MembershipListEntry req);
-	char* genAckMsg(MembershipListEntry to);
+	pair<unsigned, char*> genPingMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt);
+	pair<unsigned, char*> genPingReqMsg(MembershipListEntry to, MembershipListEntry req, Address idAddr, unsigned long idPeriodCnt);
+	pair<unsigned, char*> genAckMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt);
+
+	static string getId(Address idAddr, unsigned long idPeriodCnt) {
+		return idAddr.getAddress() + ":" + to_string(idPeriodCnt);
+	}
 };
 
 class MsgHelper {
