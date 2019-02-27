@@ -43,6 +43,7 @@ private:
 public:
 	Application(char *);
 	virtual ~Application();
+	// Get the address of the coordinator.
 	Address getjoinaddr();
 	int run();
 	void mp1Run();

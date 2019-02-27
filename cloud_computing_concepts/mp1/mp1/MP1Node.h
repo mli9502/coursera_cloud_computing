@@ -93,7 +93,7 @@ protected:
 public:
 	MemberTypes type;
 	// NOTE: This incarnationNum is not the same as the member in MP1Node. 
-	// This is received from other nodes.
+	// This is the incarnationNum that is received from other nodes.
 	long incarnationNum;
 
 	MembershipListEntry(Address addr) : Entry(addr), type(MemberTypes::ALIVE), incarnationNum(0) {}
@@ -273,6 +273,8 @@ public:
 	 * Note that the return may be smaller than K since entryList may have fewer elements than K.
 	 * The piggyback cnt for these entries are increased at the same time.
 	 * 
+	 * maxPiggybackCnt is a number that we define in parameter.
+	 * 
 	 * NOTE: we do not remove entries that exceeds piggyback-cnt threshold from the membership list, we simply ignore them.
 	 */
 	vector<T> getTopK(int k, int maxPiggybackCnt) {
@@ -307,7 +309,7 @@ public:
 		}
 	}
 	/**
-	 * Update entryList to have teh correct order based on piggyback cnt.
+	 * Update entryList to have the correct order based on piggyback cnt.
 	 */ 
 	template <typename U>
 	void reorderVec(vector<U>& vec) {
@@ -493,6 +495,10 @@ private:
 	static const int K;
 	// Each entry is piggy-backed at most lambda * log(N) times. Where N = aliveList.size().
 	static const int lambda;
+
+	// Number of targets we select each time for sending PING_REQ message.
+	static const int NUM_PING_REQ_TARGETS;
+
 	// TODO: We use this to count ping_req timeout.
 	long pingReqTimeoutCounter;
 
@@ -511,8 +517,20 @@ private:
 	// This count is needed to form the ID for a message.
 	// The ID is IP:PORT:PERIOD_CNT
 	unsigned long periodCnt;
+	// This map stores a mapping between the ID of a PING_REQ msg and the {Address, protocol_period_cnt} it needs to send ACK to when the ACK for this PING_REQ is received.
+	// When an ACK msg is received, the ID of the ACK is used to check if the ACK corresponds to a PING_REQ sent by this node.
+	// If we find the corresponding entry in this map, 
+	// 1. we first get the address and protocol period cnt we need to construct the ACK message we want to send.
+	// we need to also keep track of the protocol period cnt in the map because it is possible that we receive an ACK that is very delayed.
+	// 2. Then we erase this entry from the map.
+	// TODO: We may need to timeout the entries in the map based on protocol_period_cnt. 
+	unordered_map<string, pair<Address, unsigned long>> pingReqMap;
 
-	unordered_map<string, Address> pingReqMap;
+	template <typename T>
+	void copyMsg(char*& msg, T field) {
+		memcpy(msg, &field, sizeof(T));
+		msg += sizeof(T);
+	}
 
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
@@ -538,6 +556,28 @@ public:
 	pair<unsigned, char*> genPingMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt);
 	pair<unsigned, char*> genPingReqMsg(MembershipListEntry to, MembershipListEntry req, Address idAddr, unsigned long idPeriodCnt);
 	pair<unsigned, char*> genAckMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt);
+
+	MsgTypes getMsgType(char* msg) {
+		MsgTypes rtn;
+		memcpy(&rtn, msg, sizeof(MsgTypes));
+		return rtn;
+	}
+
+	string getMsgId(char* msg) {
+		msg += sizeof(MsgTypes);
+		Address idAddr;
+		unsigned long idPeriodCnt;
+		memcpy(&idAddr, msg, sizeof(Address));
+		msg += sizeof(Address);
+		memcpy(&idPeriodCnt, msg, sizeof(unsigned long));
+		return getId(idAddr, idPeriodCnt);
+	}
+
+	void decodePingMsg(char* msg, 
+						Address& idAddr, unsigned long& idPeriodCnt,
+						Address& fromAddr, Address& toAddr,
+						vector<MembershipListEntry>& membershipListTopK,
+						vector<FailListEntry>& failListTopK);
 
 	static string getId(Address idAddr, unsigned long idPeriodCnt) {
 		return idAddr.getAddress() + ":" + to_string(idPeriodCnt);

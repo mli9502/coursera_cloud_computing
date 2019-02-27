@@ -26,6 +26,10 @@ ostream& operator<<(ostream& os, const FailListEntry& rhs) {
  */
 const int MP1Node::K = 5;
 const int MP1Node::lambda = 5;
+// This is the number of targets we selected to send PING_REQ each period.
+// TODO: Not quite sure 5 should be the correct number. May need to modify this.
+const int MP1Node::NUM_PING_REQ_TARGETS = 5;
+
 /**
  * Overloaded Constructor of the MP1Node class
  * You can add new members to the class if you think it
@@ -52,7 +56,7 @@ MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Addres
 MP1Node::~MP1Node() {}
 
 /**
- * Get the max count for piggy-back an entry.
+ * Get the max count for piggy-back of an entry.
  * This is calculated by (lambda * log(N)).
  */
 int MP1Node::getMaxPiggybackCnt() {
@@ -323,45 +327,69 @@ pair<unsigned, char*> MP1Node::genPingMsg(MembershipListEntry to, Address idAddr
     unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 2 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
     char* msg = new char[msgSize];
     auto msgStart = msg;
-    MsgTypes type = PING;
-    memcpy(msgStart, &type, sizeof(MsgTypes));
-    msgStart += sizeof(MsgTypes);
-    memcpy(msgStart, &idAddr, sizeof(Address));
-    msgStart += sizeof(Address);
-    memcpy(msgStart, &idPeriodCnt, sizeof(unsigned long));
-    msgStart += sizeof(unsigned long);
-    memcpy(msgStart, &this->memberNode->addr, sizeof(Address));
-    msgStart += sizeof(Address);
-    memcpy(msgStart, &(to.addr), sizeof(Address));
-    msgStart += sizeof(Address);
+    MsgTypes type = MsgTypes::PING;
+    copyMsg(msgStart, type);
+    copyMsg(msgStart, idAddr);
+    copyMsg(msgStart, idPeriodCnt);
+    copyMsg(msgStart, this->memberNode->addr);
+    copyMsg(msgStart, to.addr);
     memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
     msgStart += membershipListMsg.first;
     memcpy(msgStart, failListMsg.second, failListMsg.first);
     msgStart += failListMsg.first;
     return {msgSize, msg};
 }
-// MsgTypes|id|from_address|to_address|req_address|membership_list_top_K_msg|fail_list_top_K_msg
-pair<unsigned, char*> MP1Node::genPingReqMsg(MembershipListEntry to, MembershipListEntry req, unsigned long id) {
+// MsgTypes|id_addr|id_period_cnt|from_address|to_address|req_address|membership_list_top_K_msg|fail_list_top_K_msg
+pair<unsigned, char*> MP1Node::genPingReqMsg(MembershipListEntry to, MembershipListEntry req, Address idAddr, unsigned long idPeriodCnt) {
     // First gen top K msg from membership list and fail list.
     pair<unsigned, char*> membershipListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
     pair<unsigned, char*> failListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
-    unsigned msgSize = sizeof(MsgTypes) + 2 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
+    unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 3 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
     char* msg = new char[msgSize];
     auto msgStart = msg;
-    MsgTypes type = PING_REQ;
-    memcpy(msgStart, &type, sizeof(MsgTypes));
-    msgStart += sizeof(MsgTypes);
-    memcpy(msgStart, &this->memberNode->addr, sizeof(Address));
-    msgStart += sizeof(Address);
-    memcpy(msgStart, &(to.addr), sizeof(Address));
-    msgStart += sizeof(Address);
-    memcpy(msgStart, &(req.addr), sizeof(Address));
-    msgStart += sizeof(Address);
+    MsgTypes type = MsgTypes::PING_REQ;
+    copyMsg(msgStart, type);
+    copyMsg(msgStart, idAddr);
+    copyMsg(msgStart, idPeriodCnt);
+    copyMsg(msgStart, this->memberNode->addr);
+    copyMsg(msgStart, to.addr);
+    copyMsg(msgStart, req.addr);
     memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
     msgStart += membershipListMsg.first;
     memcpy(msgStart, failListMsg.second, failListMsg.first);
     msgStart += failListMsg.first;
-    return msg;
+    return {msgSize, msg};
+}
+// MsgTypes|id_addr|id_period_cnt|from_address|to_address|membership_list_top_K_msg|fail_list_top_K_msg
+pair<unsigned, char*> MP1Node::genAckMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt) {
+    // First gen top K msg from membership list and fail list.
+    pair<unsigned, char*> membershipListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
+    pair<unsigned, char*> failListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
+    unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 2 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
+    char* msg = new char[msgSize];
+    auto msgStart = msg;
+    MsgTypes type = MsgTypes::ACK;
+    copyMsg(msgStart, type);
+    copyMsg(msgStart, idAddr);
+    copyMsg(msgStart, idPeriodCnt);
+    copyMsg(msgStart, this->memberNode->addr);
+    copyMsg(msgStart, to.addr);
+    memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
+    msgStart += membershipListMsg.first;
+    memcpy(msgStart, failListMsg.second, failListMsg.first);
+    msgStart += failListMsg.first;
+    return {msgSize, msg};
+}
+// TODO: Need to fill in this next.
+// Use MembershipList::decodeTopKMsg and FailList::decodeTopKMsg to decode top K msgs.
+void MP1Node::decodePingMsg(char* msg, 
+                            Address& idAddr, 
+                            unsigned long& idPeriodCnt,
+                            Address& fromAddr, 
+                            Address& toAddr,
+                            vector<MembershipListEntry>& membershipListTopK,
+                            vector<FailListEntry>& failListTopK) {
+
 }
 
 const vector<string> MsgHelper::msgTypeStrs {"JOINREQ", "JOINREP", "DUMMYLASTMSGTYPE"};

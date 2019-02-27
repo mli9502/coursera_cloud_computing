@@ -72,7 +72,6 @@ EmulNet::~EmulNet() {}
 void *EmulNet::ENinit(Address *myaddr, short port) {
 	// Initialize data structures for this member
 	*(int *)(myaddr->addr) = emulnet.nextid++;
-	// FIXME: Is this correct? The port is not being used at all...
     *(short *)(&myaddr->addr[4]) = 0;
 	return myaddr;
 }
@@ -91,7 +90,17 @@ int EmulNet::ENsend(Address *myaddr, Address *toaddr, char *data, int size) {
 	int sendmsg = rand() % 100;
 
 	// msg is dropped...
-	if( (emulnet.currbuffsize >= ENBUFFSIZE) || (size + (int)sizeof(en_msg) >= par->MAX_MSG_SIZE) || (par->dropmsg && sendmsg < (int) (par->MSG_DROP_PROB * 100)) ) {
+	// size: size of the message that we want to send.
+	// en_msg: the meta data block (contains from & to address and size of the message) 
+	//			that we need to send together with the message.
+	// As a result, the total message size that we need to send is (size + sizeof(en_msg)).
+	// There are 3 cases that we want to drop a message:
+	// 1. the current buffer has reached the max amount of messages that it can store.
+	// 2. the message that we want to send exceeds the max message size that is allowed.
+	// 3. par->dropmsg flag is set to true and we the 'sendmsg' random number falls in the probablity. 
+	if( (emulnet.currbuffsize >= ENBUFFSIZE) 
+		|| (size + (int)sizeof(en_msg) >= par->MAX_MSG_SIZE) 
+		|| (par->dropmsg && sendmsg < (int) (par->MSG_DROP_PROB * 100)) ) {
 		return 0;
 	}
 

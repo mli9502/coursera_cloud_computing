@@ -46,17 +46,19 @@ int main(int argc, char *argv[]) {
 	}
 	ml.printVec();
 
-	cout << "----- Select " << ml.getSize() << " targets for ping -----" << endl;
-	for(int i = 0; i < ml.getSize() + 1; i ++) {
+	int numTargetsToPing = ml.getSize() + 1;
+	cout << "----- Select " << numTargetsToPing << " targets for ping -----" << endl;
+	for(int i = 0; i < numTargetsToPing; i ++) {
 		auto target = MembershipListEntry(Address());
 		ml.getPingTarget(target, Address());
 		cout << "select: " << target << " for ping..." << endl;
 	}
+	cout << "----- Membership List after selecting " << numTargetsToPing << endl;
 	ml.printVec();
 	cout << "----- Remove 1:8080 from list -----" << endl;
 	ml.removeEntry("1:8080");
 	ml.printVec();
-	cout << "----- Get top 5 with 2 as max incarnation cnt -----" << endl;
+	cout << "----- Get top 5 with 2 as max piggyback cnt -----" << endl;
 	auto topK = ml.getTopK(5, 2);
 	for(auto& entry : topK) {
 		cout << entry << endl;
@@ -76,7 +78,7 @@ int main(int argc, char *argv[]) {
 
 	cout << "----- Test genTopKMsg and decodeTopKMsg -----" << endl;
 	auto msgPair = ml.genTopKMsg(3, 2);
-	cout << msgPair.first << endl;
+	cout << "msg size: " << msgPair.first << endl;
 	auto decodedEntries = MembershipList::decodeTopKMsg(msgPair.second);
 	for(auto& decodedEntry : decodedEntries) {
 		cout << decodedEntry << endl;
@@ -177,6 +179,9 @@ int Application::run()
  * FUNCTION NAME: mp1Run
  *
  * DESCRIPTION:	This function performs all the membership protocol functionalities
+ * 
+ * For all the nodes, we first call recvLoop() at each node to receive messages associated with this node.
+ * Then, for all the nodes, we run their membership protocal by calling nodeLoop().
  */
 void Application::mp1Run() {
 	int i;
@@ -186,8 +191,10 @@ void Application::mp1Run() {
 
 		/*
 		 * Receive messages from the network and queue them in the membership protocol queue
+		 * In here, all the nodes are being runned.
 		 */
-		if( par->getcurrtime() > (int)(par->STEP_RATE*i) && !(mp1[i]->getMemberNode()->bFailed) ) {
+		if( par->getcurrtime() > (int)(par->STEP_RATE*i) 
+			&& !(mp1[i]->getMemberNode()->bFailed) ) {
 			// Receive messages from the network and queue them
 			mp1[i]->recvLoop();
 		}
@@ -201,7 +208,7 @@ void Application::mp1Run() {
 		 * Introduce nodes into the distributed system
 		 */
 		if( par->getcurrtime() == (int)(par->STEP_RATE*i) ) {
-			// introduce the ith node into the system at time STEPRATE*i
+			// introduce the ith node into the system at time STEP_RATE*i
 			mp1[i]->nodeStart(JOINADDR, par->PORTNUM);
 			cout<<i<<"-th introduced node is assigned with the address: "<<mp1[i]->getMemberNode()->addr.getAddress() << endl;
 			nodeCount += i;

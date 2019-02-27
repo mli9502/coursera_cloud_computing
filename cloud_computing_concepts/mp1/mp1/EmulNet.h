@@ -80,6 +80,12 @@ class EmulNet
 { 	
 private:
 	Params* par;
+	/**
+	 * @mli: INFO
+	 * sent_msgs and recv_msgs keep track of the number of messages sent/received.
+	 * row is the index of the node.
+	 * col is the time that the message is sent/received.
+	 */ 
 	int sent_msgs[MAX_NODES + 1][MAX_TIME];
 	int recv_msgs[MAX_NODES + 1][MAX_TIME];
 	int enInited;
@@ -90,8 +96,13 @@ public:
  	EmulNet& operator = (EmulNet &anotherEmulNet);
  	virtual ~EmulNet();
 	void *ENinit(Address *myaddr, short port);
+	// This ENsend is just a wrapper around ENsend(Address* myaddress, Address* toaddr, char* data, int size).
 	int ENsend(Address *myaddr, Address *toaddr, string data);
 	int ENsend(Address *myaddr, Address *toaddr, char *data, int size);
+	/**
+	 * @mli: enqueues the received message by calling the 'enq' function.
+	 * 			t and times are not used for this assignment.
+	 */ 
 	int ENrecv(Address *myaddr, int (* enq)(void *, char *, int), struct timeval *t, int times, void *queue);
 	int ENcleanup();
 };
