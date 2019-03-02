@@ -24,6 +24,10 @@ ostream& operator<<(ostream& os, const FailListEntry& rhs) {
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
  */
+const long MP1Node::PING_TIMEOUT = 2;
+const long MP1Node::PING_REQ_TIMEOUT = 2 * MP1Node::PING_TIMEOUT;
+const long MP1Node::PROTOCOL_PERIOD = MP1Node::PING_TIMEOUT + MP1Node::PING_REQ_TIMEOUT + 2;
+
 const int MP1Node::K = 5;
 const int MP1Node::lambda = 5;
 // This is the number of targets we selected to send PING_REQ each period.
@@ -35,7 +39,14 @@ const int MP1Node::NUM_PING_REQ_TARGETS = 5;
  * You can add new members to the class if you think it
  * is necessary for your logic to work
  */
-MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Address *address) {
+MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Address *address) : 
+                    incarnationNum(0),
+                    failList(),
+                    membershipList(),
+                    protocolPeriodCnt(0),
+                    pingMap(PING_TIMEOUT),
+                    pingReqMap(PING_REQ_TIMEOUT),
+                    pingReqPingMap(PING_REQ_TIMEOUT) {
 	for( int i = 0; i < 6; i++ ) {
 		NULLADDR[i] = 0;
 	}
@@ -44,10 +55,6 @@ MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Addres
 	this->log = log;
 	this->par = params;
 	this->memberNode->addr = *address;
-    this->incarnationNum = 0;
-    this->membershipList = MembershipList();
-    this->failList = FailList();
-    this->periodCnt = 0;
 }
 
 /**

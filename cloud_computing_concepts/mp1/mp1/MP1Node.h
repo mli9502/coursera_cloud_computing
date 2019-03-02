@@ -15,6 +15,8 @@
 #include "EmulNet.h"
 #include "Queue.h"
 
+#include "TimeoutMap.h"
+
 #include <unordered_map>
 #include <list>
 #include <random>
@@ -481,15 +483,16 @@ private:
 	Params *par;
 	Member *memberNode;
 	char NULLADDR[6];
-	// TODO: Protocal period.
-	// PROTOCOL_PERIOD = PING_TIMEOUT + PING_REQ_TIMEOUT + 1 = 3 * RTT + 1 = 7.
-	static const long PROTOCOL_PERIOD;
+
 	// Ping timeout.
 	// PING_TIMEOUT = RTT = 2 for now.
 	static const long PING_TIMEOUT;
 	// Ping-req timeout.
 	// PING_REQ_TIMEOUT = 2 * PING_TIMEOUT = 4 for now.
 	static const long PING_REQ_TIMEOUT;
+	// TODO: Protocal period.
+	// PROTOCOL_PERIOD = PING_TIMEOUT + PING_REQ_TIMEOUT + 2 = 3 * RTT + 2 = 8.
+	static const long PROTOCOL_PERIOD;
 
 	// Every time, K entries from MembershipList, and FailList are selected for piggyback to the msg.
 	static const int K;
@@ -498,9 +501,6 @@ private:
 
 	// Number of targets we select each time for sending PING_REQ message.
 	static const int NUM_PING_REQ_TARGETS;
-
-	// TODO: We use this to count ping_req timeout.
-	long pingReqTimeoutCounter;
 
 	// Incarnation number.
 	// Initialized to 0 when node joined. Incremented when it receives a SUSPECT of itself.
@@ -511,20 +511,21 @@ private:
 	FailList failList;
 	// list of members that recently failed.
 	MembershipList membershipList;
-	// list of members that are currently alive.
-	int getMaxPiggybackCnt();
 	// Count for protocol period.
 	// This count is needed to form the ID for a message.
 	// The ID is IP:PORT:PERIOD_CNT
-	unsigned long periodCnt;
-	// This map stores a mapping between the ID of a PING_REQ msg and the {Address, protocol_period_cnt} it needs to send ACK to when the ACK for this PING_REQ is received.
-	// When an ACK msg is received, the ID of the ACK is used to check if the ACK corresponds to a PING_REQ sent by this node.
-	// If we find the corresponding entry in this map, 
-	// 1. we first get the address and protocol period cnt we need to construct the ACK message we want to send.
-	// we need to also keep track of the protocol period cnt in the map because it is possible that we receive an ACK that is very delayed.
-	// 2. Then we erase this entry from the map.
-	// TODO: We may need to timeout the entries in the map based on protocol_period_cnt. 
-	unordered_map<string, pair<Address, unsigned long>> pingReqMap;
+	unsigned long protocolPeriodCnt;
+	// pingMap, pingReqMap and pingReqPingMap stores the outstanding msgs that we sent out.
+	// key: ID, val: msg we sent
+	// ID = src_ip|dest_ip|protocol_period_cnt
+	// pingMap: The initial ping message we send every protocol period. 
+	TimeoutMap<string, string> pingMap;
+	// pingReqMap: The ping_req msgs we send out after the initial ping request times out.
+	TimeoutMap<string, string> pingReqMap;
+	// pingReqPingMap: The ping msgs we send out after we receives a ping_req msg. 
+	TimeoutMap<string, string> pingReqPingMap;
+	// list of members that are currently alive.
+	int getMaxPiggybackCnt();
 
 	template <typename T>
 	void copyMsg(char*& msg, T field) {
