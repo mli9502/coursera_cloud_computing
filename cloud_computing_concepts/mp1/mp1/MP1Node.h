@@ -218,11 +218,44 @@ public:
 		return false; 
 	}
 	// number_of_entries|entry|entry|...
-	pair<unsigned, char*> genTopKMsg(int k, int maxPiggybackCnt) {
-		if(this->topKMsg) {
-			delete [] this->topKMsg;
-		}
-		vector<T> topEntries = this->getTopK(k, maxPiggybackCnt);
+	// TODO: Need to update this method to take in the list of entries we want to encode.
+	// 		 Basically, we want to seperate this with getTopK().
+	//		 We want to getTopK first, then, pass the rtn from getTopK to genTopKMsg.
+	//		 So, the BaseMessage::encode() do not have to take in any argument.
+// 	pair<unsigned, char*> genTopKMsg(int k, int maxPiggybackCnt) {
+// 		if(this->topKMsg) {
+// 			delete [] this->topKMsg;
+// 		}
+// 		vector<T> topEntries = this->getTopK(k, maxPiggybackCnt);
+// #ifdef TEST
+// 		cout << "----------------------------------------" << endl;
+// 		for(auto& entry : topEntries) {
+// 			cout << entry << endl;
+// 		}
+// 		cout << "----------------------------------------" << endl;
+// #endif
+// 		vector<pair<unsigned, char*>> topMsgs;
+// 		for(auto& entry : topEntries) {
+// 			topMsgs.push_back(make_pair(entry.getEntrySize(), entry.getEntryMsg()));
+// 		}
+// 		unsigned numMsgs = topMsgs.size();
+// 		// get total msg size.
+// 		unsigned msgSize = sizeof(unsigned);
+// 		for(auto& entry : topMsgs) {
+// 			msgSize += entry.first;
+// 		}
+// 		this->topKMsg = new char[msgSize];
+// 		auto tmpPtr = topKMsg;
+// 		memcpy(tmpPtr, &numMsgs, sizeof(unsigned));
+// 		tmpPtr += sizeof(unsigned);
+// 		for(auto& entry : topMsgs) {
+// 			memcpy(tmpPtr, entry.second, entry.first);
+// 			tmpPtr += entry.first;
+// 		}
+// 		return make_pair(msgSize, this->topKMsg);
+// 	}
+
+	static string encodeTopKMsg(const vector<T>& topEntries) {
 #ifdef TEST
 		cout << "----------------------------------------" << endl;
 		for(auto& entry : topEntries) {
@@ -240,18 +273,22 @@ public:
 		for(auto& entry : topMsgs) {
 			msgSize += entry.first;
 		}
-		this->topKMsg = new char[msgSize];
-		auto tmpPtr = topKMsg;
+
+		char* tmpPtr = new char[msgSize];
 		memcpy(tmpPtr, &numMsgs, sizeof(unsigned));
 		tmpPtr += sizeof(unsigned);
 		for(auto& entry : topMsgs) {
 			memcpy(tmpPtr, entry.second, entry.first);
 			tmpPtr += entry.first;
 		}
-		return make_pair(msgSize, this->topKMsg);
+#ifdef TEST
+		cout << "msgSize: " << msgSize << endl;
+		cout << "msg: " << string(tmpPtr, msgSize) << endl;
+#endif
+		return string(tmpPtr, msgSize);
 	}
 
-	static vector<T> decodeTopKMsg(char* msg) {
+	static void decodeTopKMsg(char*& msg, vector<T>& rtn) {
 		unsigned numEntries = 0;
 		memcpy(&numEntries, msg, sizeof(unsigned));
 #ifdef TEST
@@ -262,12 +299,10 @@ public:
 #ifdef TEST
 		cout << "entrySize: " << entrySize << endl;
 #endif
-		vector<T> rtn;
 		for(unsigned i = 0; i < numEntries; i ++) {
 			rtn.push_back(T::decodeEntryMsg(msg));
 			msg += entrySize;
 		}
-		return rtn;
 	}
 
 	/**
@@ -469,7 +504,7 @@ public:
  */
 typedef struct MessageHdr {
 	enum MsgTypes msgType;
-}MessageHdr;
+} MessageHdr;
 
 /**
  * CLASS NAME: MP1Node
@@ -527,12 +562,6 @@ private:
 	// list of members that are currently alive.
 	int getMaxPiggybackCnt();
 
-	template <typename T>
-	void copyMsg(char*& msg, T field) {
-		memcpy(msg, &field, sizeof(T));
-		msg += sizeof(T);
-	}
-
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
 	Member * getMemberNode() {
@@ -582,6 +611,18 @@ public:
 
 	static string getId(Address idAddr, unsigned long idPeriodCnt) {
 		return idAddr.getAddress() + ":" + to_string(idPeriodCnt);
+	}
+
+	template <typename T>
+	static void copyMsg(char*& msg, T field) {
+		memcpy(msg, &field, sizeof(T));
+		msg += sizeof(T);
+	}
+
+	template <typename T>
+	static void copyObj(char*& msg, T& field) {
+		memcpy(&field, msg, sizeof(T));
+		msg += sizeof(T);
 	}
 };
 

@@ -1,15 +1,14 @@
 #ifndef _BASE_MESSAGE_H_
 #define _BASE_MESSAGE_H_
 
-#include "include_std.h"
+#include "stdincludes.h"
 
 #include "MP1Node.h"
 
 class BaseMessage {
 public:
     BaseMessage() {};
-    // ctor for encode.
-    // TODO: Need to implement this in child classes.
+    // ctor in order to encode.
     BaseMessage(MsgTypes msgType,
                 Address source,
                 Address destination,
@@ -45,8 +44,12 @@ public:
     // ACK: destination|source|protocol_period.
     virtual string getId() = 0;
     // TODO: Implement decode and encode.
-    virtual shared_ptr<BaseMessage> decode(const string& msg) = 0;
+    virtual void decode(string msg) = 0;
     virtual string encode() = 0;
+    // This method implements what we should do when we receive a type of message.
+    virtual void onReceiveHandler(MP1Node& state) = 0;
+    
+    virtual void printMsg() = 0;
 
 protected:
     MsgTypes msgType;

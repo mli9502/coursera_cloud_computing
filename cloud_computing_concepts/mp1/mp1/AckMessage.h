@@ -5,11 +5,32 @@
 
 class AckMessage : public BaseMessage {
 public:
+    AckMessage() : BaseMessage() {}
+    AckMessage(MsgTypes msgType,
+                Address source,
+                Address destination,
+                unsigned long protocol_period,
+                unsigned long incarnation,
+                const vector<MembershipListEntry>& piggybackMembershipList,
+                const vector<FailListEntry>& piggybackFailList) : 
+                BaseMessage(msgType,
+                            source,
+                            destination,
+                            protocol_period,
+                            piggybackMembershipList,
+                            piggybackFailList),
+                incarnation(incarnation) {}
+
     unsigned long getIncarnation() {
         return incarnation;
     }
     string getId() override;
+    void decode(string msg) override;
+    string encode() override;
+    void onReceiveHandler(MP1Node& state) override;
 
+    void printMsg() override;
+    
 private:
     unsigned long incarnation;
 };

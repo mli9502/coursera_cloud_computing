@@ -5,10 +5,29 @@
 
 class PingReqMessage : public BaseMessage {
 public:
+    PingReqMessage() : BaseMessage() {}
+    PingReqMessage(MsgTypes msgType,
+                    Address source,
+                    Address route,
+                    Address destination,
+                    unsigned long protocol_period,
+                    const vector<MembershipListEntry>& piggybackMembershipList,
+                    const vector<FailListEntry>& piggybackFailList) : 
+                    BaseMessage(msgType,
+                                source,
+                                destination,
+                                protocol_period,
+                                piggybackMembershipList,
+                                piggybackFailList),
+                    route(route) {}
+
     Address getRoute() {
         return route;
     }
     string getId() override;
+    void decode(string msg) override;
+    string encode() override;
+    void onReceiveHandler(MP1Node& state) override;
 
 private:
     Address route;

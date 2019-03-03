@@ -5,7 +5,23 @@
 
 class PingMessage : public BaseMessage {
 public:
-    string getId() override;    
+    PingMessage() : BaseMessage() {}
+    PingMessage(MsgTypes msgType,
+                Address source,
+                Address destination,
+                unsigned long protocol_period,
+                const vector<MembershipListEntry>& piggybackMembershipList,
+                const vector<FailListEntry>& piggybackFailList) : 
+                BaseMessage(msgType,
+                            source,
+                            destination,
+                            protocol_period,
+                            piggybackMembershipList,
+                            piggybackFailList) {}
+    string getId() override;
+    void decode(string msg) override;
+    string encode() override;
+    void onReceiveHandler(MP1Node& state) override;
 };
 
 #endif
