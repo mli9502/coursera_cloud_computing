@@ -16,15 +16,16 @@ ifndef HEADER_DIR
 endif
 
 ifndef SRC_OBJ_DIR
-	SRC_OBJ_DIR = ../
+	SRC_OBJ_DIR = ../obj
 endif
 
 # source files and headers.
 TEST_SRC_FILES = $(notdir $(wildcard $(TEST_SRC_DIR)/*.cpp))
 HEADER_FILES = $(wildcard $(HEADER_DIR)/*.h) 
 
-TEST_OBJ_FILES = $(addprefix $(TEST_OBJ_DIR)/, $(TEST_SRC_FILES:.cpp=.o))
+TEST_OBJ_FILES := $(addprefix $(TEST_OBJ_DIR)/, $(TEST_SRC_FILES:.cpp=.o))
 SRC_OBJ_FILES = $(wildcard $(SRC_OBJ_DIR)/*.o)
+SRC_OBJ_FILES := $(filter-out $(SRC_OBJ_DIR)/main.o,$(SRC_OBJ_FILES))
 
 TEST_DEP_FILES = $(TEST_OBJ_FILES:.o=.d)
 
@@ -40,7 +41,7 @@ GTEST_LIB = $(TEST_OBJ_DIR)/gtest.a
 
 all_tests: $(TEST_OBJ_FILES) $(SRC_OBJ_FILES)
 	$(MAKE) libgtest
-	$(MAKE) -C ..
+	$(MAKE) -C .. main
 	$(CXX) $(CPP_FLAGS) $(CXX_FLAGS) $(LD_FLAGS) $^ $(GTEST_LIB_MAIN) -o $@ 
 
 libgtest:

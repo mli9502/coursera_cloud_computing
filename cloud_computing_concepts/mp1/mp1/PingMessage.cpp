@@ -56,7 +56,7 @@ string PingMessage::encode() {
     return rtn;
 }
 
-void onReceiveHandler(MP1Node& state) {
+void PingMessage::onReceiveHandler(MP1Node& state) {
     // TODO: fill this in.
 #ifdef DEBUGLOG
     cout << "In PingMessage::onReceiveHandler..." << endl;

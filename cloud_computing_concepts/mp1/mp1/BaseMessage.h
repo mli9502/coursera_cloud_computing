@@ -22,7 +22,7 @@ public:
                 piggybackMembershipList(piggybackMembershipList),
                 piggybackFailList(piggybackFailList) {}
 
-    ~BaseMessage() {};
+    virtual ~BaseMessage() {};
 
     MsgTypes getMsgType() {
         return msgType;

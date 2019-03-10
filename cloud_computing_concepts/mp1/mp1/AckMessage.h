@@ -20,7 +20,7 @@ public:
                             piggybackMembershipList,
                             piggybackFailList),
                 incarnation(incarnation) {}
-
+    
     unsigned long getIncarnation() {
         return incarnation;
     }

@@ -329,63 +329,66 @@ void MP1Node::printAddress(Address *addr)
 // MsgTypes|id_addr|id_period_cnt|from_address|to_address|membership_list_top_K_msg|fail_list_top_K_msg
 pair<unsigned, char*> MP1Node::genPingMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt) {
     // First gen top K msg from membership list and fail list.
-    pair<unsigned, char*> membershipListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
-    pair<unsigned, char*> failListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
-    unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 2 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
-    char* msg = new char[msgSize];
-    auto msgStart = msg;
-    MsgTypes type = MsgTypes::PING;
-    copyMsg(msgStart, type);
-    copyMsg(msgStart, idAddr);
-    copyMsg(msgStart, idPeriodCnt);
-    copyMsg(msgStart, this->memberNode->addr);
-    copyMsg(msgStart, to.addr);
-    memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
-    msgStart += membershipListMsg.first;
-    memcpy(msgStart, failListMsg.second, failListMsg.first);
-    msgStart += failListMsg.first;
-    return {msgSize, msg};
+    // pair<unsigned, char*> membershipListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
+    // pair<unsigned, char*> failListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
+    // unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 2 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
+    // char* msg = new char[msgSize];
+    // auto msgStart = msg;
+    // MsgTypes type = MsgTypes::PING;
+    // copyMsg(msgStart, type);
+    // copyMsg(msgStart, idAddr);
+    // copyMsg(msgStart, idPeriodCnt);
+    // copyMsg(msgStart, this->memberNode->addr);
+    // copyMsg(msgStart, to.addr);
+    // memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
+    // msgStart += membershipListMsg.first;
+    // memcpy(msgStart, failListMsg.second, failListMsg.first);
+    // msgStart += failListMsg.first;
+    // return {msgSize, msg};
+    return {0, 0};
 }
 // MsgTypes|id_addr|id_period_cnt|from_address|to_address|req_address|membership_list_top_K_msg|fail_list_top_K_msg
 pair<unsigned, char*> MP1Node::genPingReqMsg(MembershipListEntry to, MembershipListEntry req, Address idAddr, unsigned long idPeriodCnt) {
     // First gen top K msg from membership list and fail list.
-    pair<unsigned, char*> membershipListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
-    pair<unsigned, char*> failListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
-    unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 3 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
-    char* msg = new char[msgSize];
-    auto msgStart = msg;
-    MsgTypes type = MsgTypes::PING_REQ;
-    copyMsg(msgStart, type);
-    copyMsg(msgStart, idAddr);
-    copyMsg(msgStart, idPeriodCnt);
-    copyMsg(msgStart, this->memberNode->addr);
-    copyMsg(msgStart, to.addr);
-    copyMsg(msgStart, req.addr);
-    memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
-    msgStart += membershipListMsg.first;
-    memcpy(msgStart, failListMsg.second, failListMsg.first);
-    msgStart += failListMsg.first;
-    return {msgSize, msg};
+    // pair<unsigned, char*> membershipListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
+    // pair<unsigned, char*> failListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
+    // unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 3 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
+    // char* msg = new char[msgSize];
+    // auto msgStart = msg;
+    // MsgTypes type = MsgTypes::PING_REQ;
+    // copyMsg(msgStart, type);
+    // copyMsg(msgStart, idAddr);
+    // copyMsg(msgStart, idPeriodCnt);
+    // copyMsg(msgStart, this->memberNode->addr);
+    // copyMsg(msgStart, to.addr);
+    // copyMsg(msgStart, req.addr);
+    // memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
+    // msgStart += membershipListMsg.first;
+    // memcpy(msgStart, failListMsg.second, failListMsg.first);
+    // msgStart += failListMsg.first;
+    // return {msgSize, msg};
+    return {0, 0};
 }
 // MsgTypes|id_addr|id_period_cnt|from_address|to_address|membership_list_top_K_msg|fail_list_top_K_msg
 pair<unsigned, char*> MP1Node::genAckMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt) {
     // First gen top K msg from membership list and fail list.
-    pair<unsigned, char*> membershipListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
-    pair<unsigned, char*> failListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
-    unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 2 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
-    char* msg = new char[msgSize];
-    auto msgStart = msg;
-    MsgTypes type = MsgTypes::ACK;
-    copyMsg(msgStart, type);
-    copyMsg(msgStart, idAddr);
-    copyMsg(msgStart, idPeriodCnt);
-    copyMsg(msgStart, this->memberNode->addr);
-    copyMsg(msgStart, to.addr);
-    memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
-    msgStart += membershipListMsg.first;
-    memcpy(msgStart, failListMsg.second, failListMsg.first);
-    msgStart += failListMsg.first;
-    return {msgSize, msg};
+    // pair<unsigned, char*> membershipListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
+    // pair<unsigned, char*> failListMsg = membershipList.genTopKMsg(MP1Node::K, getMaxPiggybackCnt());
+    // unsigned msgSize = sizeof(MsgTypes) + sizeof(Address) + sizeof(unsigned long) + 2 * sizeof(Address) + membershipListMsg.first + failListMsg.first;
+    // char* msg = new char[msgSize];
+    // auto msgStart = msg;
+    // MsgTypes type = MsgTypes::ACK;
+    // copyMsg(msgStart, type);
+    // copyMsg(msgStart, idAddr);
+    // copyMsg(msgStart, idPeriodCnt);
+    // copyMsg(msgStart, this->memberNode->addr);
+    // copyMsg(msgStart, to.addr);
+    // memcpy(msgStart, membershipListMsg.second, membershipListMsg.first);
+    // msgStart += membershipListMsg.first;
+    // memcpy(msgStart, failListMsg.second, failListMsg.first);
+    // msgStart += failListMsg.first;
+    // return {msgSize, msg};
+    return {0, 0};
 }
 // TODO: Need to fill in this next.
 // Use MembershipList::decodeTopKMsg and FailList::decodeTopKMsg to decode top K msgs.

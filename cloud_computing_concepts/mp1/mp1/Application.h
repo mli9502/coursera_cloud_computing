@@ -18,7 +18,7 @@
 /**
  * global variables
  */
-int nodeCount = 0;
+extern int nodeCount;
 
 /*
  * Macros

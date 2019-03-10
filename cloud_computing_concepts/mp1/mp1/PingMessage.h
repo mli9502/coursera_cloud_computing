@@ -22,6 +22,8 @@ public:
     void decode(string msg) override;
     string encode() override;
     void onReceiveHandler(MP1Node& state) override;
+    // TODO: Implement this properly...
+    void printMsg() override {};
 };
 
 #endif

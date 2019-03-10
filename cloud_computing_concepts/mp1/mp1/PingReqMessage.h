@@ -28,6 +28,8 @@ public:
     void decode(string msg) override;
     string encode() override;
     void onReceiveHandler(MP1Node& state) override;
+    // TODO: Need to implement this properly.
+    void printMsg() override {}
 
 private:
     Address route;

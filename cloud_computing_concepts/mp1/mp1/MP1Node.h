@@ -109,12 +109,8 @@ public:
 	}
 
 	// Convert this entry into char* message.
-	char* getEntryMsg() {
-		// First clear this msg.
-		if(entryMsg != nullptr) {
-			delete [] entryMsg;
-		}
-		entryMsg = new char[getEntrySize()];
+	char* getEntryMsg() const {
+		char* entryMsg = new char[getEntrySize()];
 		auto msgPtr = entryMsg;
 		memcpy(msgPtr, &(this->addr), sizeof(Address));
 		msgPtr += sizeof(Address);
@@ -159,12 +155,8 @@ public:
 	}
 
 	// Convert this entry into char* message.
-	char* getEntryMsg() {
-		// First clear this msg.
-		if(entryMsg != nullptr) {
-			delete [] entryMsg;
-		}
-		entryMsg = new char[getEntrySize()];
+	char* getEntryMsg() const {
+		char* entryMsg = new char[getEntrySize()];
 		auto msgPtr = entryMsg;
 		memcpy(msgPtr, &(this->addr), sizeof(Address));
 		msgPtr += sizeof(Address);
