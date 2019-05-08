@@ -6,7 +6,7 @@
 class AckMessage : public BaseMessage {
 public:
     AckMessage() : BaseMessage() {}
-    AckMessage(MsgTypes msgType,
+    AckMessage(MsgTypes::Types msgType,
                 Address source,
                 Address destination,
                 unsigned long protocol_period,

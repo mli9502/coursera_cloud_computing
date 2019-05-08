@@ -22,7 +22,7 @@ string PingMessage::encode() {
     string piggybackMembershipListMsg = MembershipList::encodeTopKMsg(this->piggybackMembershipList);
     string piggybackFailListMsg = FailList::encodeTopKMsg(this->piggybackFailList);
     
-    unsigned msgSize = sizeof(MsgTypes) // MsgType
+    unsigned msgSize = sizeof(MsgTypes::Types) // MsgType
                         + sizeof(Address) // src_address
                         + sizeof(Address) // dest_address
                         + sizeof(unsigned long) // protocol_period
@@ -33,7 +33,7 @@ string PingMessage::encode() {
     
     char* msg = new char[msgSize];
     auto msgStart = msg;
-    MsgTypes type = MsgTypes::PING;
+    MsgTypes::Types type = MsgTypes::PING;
     MP1Node::copyMsg(msgStart, type);
     MP1Node::copyMsg(msgStart, this->source);
     MP1Node::copyMsg(msgStart, this->destination);

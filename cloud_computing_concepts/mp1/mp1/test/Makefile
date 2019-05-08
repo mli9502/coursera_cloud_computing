@@ -31,7 +31,7 @@ TEST_DEP_FILES = $(TEST_OBJ_FILES:.o=.d)
 
 CPP_FLAGS += -isystem $(GTEST_DIR)/include
 CXX_FLAGS += -g -Wall -Wextra -pthread -I$(HEADER_DIR) -std=c++11
-CXX_FLAGS += -Wno-unused-parameter
+CXX_FLAGS += -Wno-unused-parameter -Wno-unused-variable -Wno-unused-private-field
 LD_FLAGS = -lpthread
 
 GTEST_LIB_MAIN = $(TEST_OBJ_DIR)/gtest_main.a

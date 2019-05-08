@@ -12,7 +12,7 @@
  */ 
 class MessageDecoder {
 public:
-    static MsgTypes getTypeFromMsg(const string& msg);
+    static MsgTypes::Types getTypeFromMsg(const string& msg);
     static shared_ptr<BaseMessage> decode(const string& msg);
 };
 

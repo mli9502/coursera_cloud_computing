@@ -174,7 +174,7 @@ int MP1Node::introduceSelfToGroup(Address *joinaddr) {
         msg = (MessageHdr *) malloc(msgsize * sizeof(char));
 
         // create JOINREQ message: format of data is {struct Address myaddr}
-        msg->msgType = JOINREQ;
+        msg->msgType = MsgTypes::JOINREQ;
         memcpy((char *)(msg+1), &memberNode->addr.addr, sizeof(memberNode->addr.addr));
         memcpy((char *)(msg+1) + 1 + sizeof(memberNode->addr.addr), &memberNode->heartbeat, sizeof(long));
 
@@ -259,7 +259,7 @@ bool MP1Node::recvCallBack(void *env, char *data, int size ) {
 	 */
     cerr << "Received msg type: " << MsgHelper::getMsgTypeStr(MsgHelper::getMsgType(data)) << endl;
     // TODO: If JOINREQ is received, and the current node is the introducer, we send back a list with fixed number of members to the newly joined node.
-    // TODO: If JOINREP is received, we set env->inGroup member of this node to true. And also set the membership list with the list in this ace msg.
+    // TODO: If JOINRESP is received, we set env->inGroup member of this node to true. And also set the membership list with the list in this ace msg.
 }
 
 /**
@@ -402,17 +402,17 @@ void MP1Node::decodePingMsg(char* msg,
 
 }
 
-const vector<string> MsgHelper::msgTypeStrs {"JOINREQ", "JOINREP", "DUMMYLASTMSGTYPE"};
+const vector<string> MsgHelper::msgTypeStrs {"JOINREQ", "JOINRESP", "DUMMYLASTMSGTYPE"};
 
 // Get message type from message.
-MsgTypes MsgHelper::getMsgType(char* data) {
+MsgTypes::Types MsgHelper::getMsgType(char* data) {
     MessageHdr* tmp = (MessageHdr*)malloc(sizeof(MessageHdr));
     memcpy(tmp, data, sizeof(MessageHdr));
-    MsgTypes rtn = tmp->msgType;
+    MsgTypes::Types rtn = tmp->msgType;
     free(tmp);
     return rtn;
 } 
 
-string MsgHelper::getMsgTypeStr(MsgTypes mt) {
+string MsgHelper::getMsgTypeStr(MsgTypes::Types mt) {
     return msgTypeStrs[(size_t)mt];
 }

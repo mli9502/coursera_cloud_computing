@@ -1,9 +1,9 @@
 #include "MessageDecoder.h"
 
-MsgTypes MessageDecoder::getTypeFromMsg(const string& msg) {
+MsgTypes::Types MessageDecoder::getTypeFromMsg(const string& msg) {
     MessageHdr* tmp = (MessageHdr*)malloc(sizeof(MessageHdr));
     memcpy(tmp, msg.c_str(), sizeof(MessageHdr));
-    MsgTypes rtn = tmp->msgType;
+    MsgTypes::Types rtn = tmp->msgType;
     free(tmp);
     return rtn;
 }
@@ -12,10 +12,10 @@ MsgTypes MessageDecoder::getTypeFromMsg(const string& msg) {
 // we should call this method to decode the message.
 // Then, use the return pointer, we can call the onReceiveHandler method to handle the received message.
 shared_ptr<BaseMessage> decode(const string& msg) {
-    MsgTypes type = MessageDecoder::getTypeFromMsg(msg);
+    MsgTypes::Types type = MessageDecoder::getTypeFromMsg(msg);
     shared_ptr<BaseMessage> rtn;
     switch(type) {
-        case PING: {
+        case MsgTypes::PING: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type PING!" << endl;
             cout << "msg: " << msg << endl;
@@ -23,7 +23,7 @@ shared_ptr<BaseMessage> decode(const string& msg) {
             rtn.reset(new PingMessage());
             break;
         }
-        case PING_REQ: {
+        case MsgTypes::PING_REQ: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type PING_REQ!" << endl;
             cout << "msg: " << msg << endl;
@@ -31,7 +31,7 @@ shared_ptr<BaseMessage> decode(const string& msg) {
             rtn.reset(new PingReqMessage());
             break;
         }
-        case ACK: {
+        case MsgTypes::ACK: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type ACK!" << endl;
             cout << "msg: " << msg << endl;

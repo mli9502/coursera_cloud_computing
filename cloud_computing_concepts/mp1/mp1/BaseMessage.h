@@ -9,7 +9,7 @@ class BaseMessage {
 public:
     BaseMessage() {};
     // ctor in order to encode.
-    BaseMessage(MsgTypes msgType,
+    BaseMessage(MsgTypes::Types msgType,
                 Address source,
                 Address destination,
                 unsigned long protocol_period,
@@ -24,7 +24,7 @@ public:
 
     virtual ~BaseMessage() {};
 
-    MsgTypes getMsgType() {
+    MsgTypes::Types getMsgType() {
         return msgType;
     }
     Address getSrc() {
@@ -43,7 +43,6 @@ public:
     // PING_REQ: source|route|destination|protocol_period.
     // ACK: destination|source|protocol_period.
     virtual string getId() = 0;
-    // TODO: Implement decode and encode.
     virtual void decode(string msg) = 0;
     virtual string encode() = 0;
     // This method implements what we should do when we receive a type of message.
@@ -52,7 +51,7 @@ public:
     virtual void printMsg() = 0;
 
 protected:
-    MsgTypes msgType;
+    MsgTypes::Types msgType;
     Address source;
     Address destination;
     unsigned long protocol_period;

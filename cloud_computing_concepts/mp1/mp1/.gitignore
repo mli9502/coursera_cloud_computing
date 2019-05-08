@@ -5,3 +5,5 @@ Application
 **/*.d
 **/*.o
 **/*.a
+main
+test/all_tests

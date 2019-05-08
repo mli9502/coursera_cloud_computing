@@ -6,7 +6,7 @@
 class PingMessage : public BaseMessage {
 public:
     PingMessage() : BaseMessage() {}
-    PingMessage(MsgTypes msgType,
+    PingMessage(MsgTypes::Types msgType,
                 Address source,
                 Address destination,
                 unsigned long protocol_period,

@@ -37,16 +37,43 @@
 /**
  * Message Types
  */
-enum MsgTypes {
-    JOINREQ,
-    JOINREP,
-	// ping msg.
-    PING,
-	// ping-req msg.
-	PING_REQ,
-	// ack msg.
-	ACK
+
+struct MsgTypes {
+	enum Types {
+		JOINREQ = 0,
+		JOINRESP = 1,
+		// ping msg.
+		PING = 2,
+		// ping-req msg.
+		PING_REQ = 3,
+		// ack msg.
+		ACK = 4
+	};
+
+	static std::string to_string(const MsgTypes::Types type) {
+		switch(type) {
+			case JOINREQ:
+				return "JOINREQ";
+				break;
+			case JOINRESP:
+				return "JOINRESP";
+				break;
+			case PING:
+				return "PING";
+				break;
+			case PING_REQ:
+				return "PING_REQ";
+				break;
+			case ACK:
+				return "ACK";
+				break;
+			default:
+				return "INVALID_MSG_TYPE";
+		}
+	}
+
 };
+
 
 enum MemberTypes {
 	ALIVE,
@@ -109,9 +136,9 @@ public:
 	}
 
 	// Convert this entry into char* message.
-	char* getEntryMsg() const {
-		char* entryMsg = new char[getEntrySize()];
-		auto msgPtr = entryMsg;
+	vector<char> getEntryMsg() const {
+		vector<char> entryMsg(getEntrySize());
+		char* msgPtr = &entryMsg[0];
 		memcpy(msgPtr, &(this->addr), sizeof(Address));
 		msgPtr += sizeof(Address);
 		memcpy(msgPtr, &(this->type), sizeof(MemberTypes));
@@ -121,21 +148,24 @@ public:
 	}
 
 	// Convert a msg back to entry.
-	static MembershipListEntry decodeEntryMsg(char* msg) {
+	static MembershipListEntry decodeEntryMsg(const vector<char>& msg) {
+		const char* msgPtr = &msg[0];
 		Address addr;
 		MemberTypes type;
 		long incarnationNum = 0;
-		memcpy(&addr, msg, sizeof(Address));
-		msg += sizeof(Address);
-		memcpy(&type, msg, sizeof(MemberTypes));
-		msg += sizeof(MemberTypes);
-		memcpy(&incarnationNum, msg, sizeof(long));
+		memcpy(&addr, msgPtr, sizeof(Address));
+		msgPtr += sizeof(Address);
+		memcpy(&type, msgPtr, sizeof(MemberTypes));
+		msgPtr += sizeof(MemberTypes);
+		memcpy(&incarnationNum, msgPtr, sizeof(long));
 		return MembershipListEntry(addr, type, incarnationNum);
 	}
 
 	friend ostream& operator<<(ostream& os, const MembershipListEntry& rhs);
 };
-
+// TODO: What should we put in FailListEntry?
+// Only an Address should be enough. What is evictTimeout needed for?
+// evictTimeout is needed for deleting the entries that has been in list for too long.
 class FailListEntry : public Entry {
 public:
 	static long MAX_LIVE_TIME;
@@ -155,9 +185,9 @@ public:
 	}
 
 	// Convert this entry into char* message.
-	char* getEntryMsg() const {
-		char* entryMsg = new char[getEntrySize()];
-		auto msgPtr = entryMsg;
+	vector<char> getEntryMsg() const {
+		vector<char> entryMsg(getEntrySize());
+		char* msgPtr = &entryMsg[0];
 		memcpy(msgPtr, &(this->addr), sizeof(Address));
 		msgPtr += sizeof(Address);
 		memcpy(msgPtr, &(this->type), sizeof(MemberTypes));
@@ -165,13 +195,15 @@ public:
 	}
 
 	// Convert a msg back to entry.
-	static FailListEntry decodeEntryMsg(char* msg) {
+	// NOTE: FailList and MembershipList entries only contain 
+	static FailListEntry decodeEntryMsg(const vector<char>& msg) {
 		Address addr;
 		MemberTypes type;
 		long incarnationNum = 0;
-		memcpy(&addr, msg, sizeof(Address));
-		msg += sizeof(Address);
-		memcpy(&type, msg, sizeof(MemberTypes));
+		const char* msgPtr = &msg[0];
+		memcpy(&addr, msgPtr, sizeof(Address));
+		msgPtr += sizeof(Address);
+		memcpy(&type, msgPtr, sizeof(MemberTypes));
 		return FailListEntry(addr);
 	}
 
@@ -247,7 +279,7 @@ public:
 // 		return make_pair(msgSize, this->topKMsg);
 // 	}
 
-	static string encodeTopKMsg(const vector<T>& topEntries) {
+	static vector<char> encodeTopKMsg(const vector<T>& topEntries) {
 #ifdef TEST
 		cout << "----------------------------------------" << endl;
 		for(auto& entry : topEntries) {
@@ -255,45 +287,41 @@ public:
 		}
 		cout << "----------------------------------------" << endl;
 #endif
-		vector<pair<unsigned, char*>> topMsgs;
+		vector<char> msg;
+		// Insert number of entries at the start of message.
+		vector<char> entryCntMsg(sizeof(unsigned));
+		unsigned numEntries = topEntries.size();
+		memcpy(&entryCntMsg[0], &numEntries, sizeof(unsigned));
+		msg.insert(msg.end(), entryCntMsg.begin(), entryCntMsg.end());
+		// Insert entries into message.
 		for(auto& entry : topEntries) {
-			topMsgs.push_back(make_pair(entry.getEntrySize(), entry.getEntryMsg()));
-		}
-		unsigned numMsgs = topMsgs.size();
-		// get total msg size.
-		unsigned msgSize = sizeof(unsigned);
-		for(auto& entry : topMsgs) {
-			msgSize += entry.first;
+			const auto& entryMsg = entry.getEntryMsg();
+			msg.insert(msg.end(), entryMsg.begin(), entryMsg.end());
 		}
 
-		char* tmpPtr = new char[msgSize];
-		memcpy(tmpPtr, &numMsgs, sizeof(unsigned));
-		tmpPtr += sizeof(unsigned);
-		for(auto& entry : topMsgs) {
-			memcpy(tmpPtr, entry.second, entry.first);
-			tmpPtr += entry.first;
-		}
 #ifdef TEST
-		cout << "msgSize: " << msgSize << endl;
-		cout << "msg: " << string(tmpPtr, msgSize) << endl;
+		cout << "msgSize: " << msg.size() << endl;
 #endif
-		return string(tmpPtr, msgSize);
+		return msg;
 	}
 
-	static void decodeTopKMsg(char*& msg, vector<T>& rtn) {
+	static void decodeTopKMsg(const vector<char>& msg, vector<T>& rtn) {
+		const char* msgPtr = &msg[0];
+
 		unsigned numEntries = 0;
-		memcpy(&numEntries, msg, sizeof(unsigned));
+		memcpy(&numEntries, msgPtr, sizeof(unsigned));
 #ifdef TEST
 		cout << "numEntries: " << numEntries << endl;
 #endif
-		msg += sizeof(unsigned);
+		msgPtr += sizeof(unsigned);
 		unsigned entrySize = T::getEntrySize();
 #ifdef TEST
 		cout << "entrySize: " << entrySize << endl;
 #endif
+		unsigned startIdx = sizeof(unsigned);
 		for(unsigned i = 0; i < numEntries; i ++) {
-			rtn.push_back(T::decodeEntryMsg(msg));
-			msg += entrySize;
+			rtn.push_back(T::decodeEntryMsg(vector<char>(msg.begin() + startIdx, msg.begin() + startIdx + entrySize)));
+			startIdx += entrySize;
 		}
 	}
 
@@ -376,7 +404,7 @@ std::mt19937::result_type EntryList<T>::SEED = SEED_CONST;
 class MembershipList : public EntryList<MembershipListEntry> {
 public:
 	// Index for the last ping target we selected.
-	int lastPingIdx;
+	unsigned lastPingIdx;
 	MembershipList() : EntryList(), lastPingIdx(0) {}
 	~MembershipList() = default;
 
@@ -495,7 +523,7 @@ public:
  * DESCRIPTION: Header and content of a message
  */
 typedef struct MessageHdr {
-	enum MsgTypes msgType;
+	enum MsgTypes::Types msgType;
 } MessageHdr;
 
 /**
@@ -579,14 +607,14 @@ public:
 	pair<unsigned, char*> genPingReqMsg(MembershipListEntry to, MembershipListEntry req, Address idAddr, unsigned long idPeriodCnt);
 	pair<unsigned, char*> genAckMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt);
 
-	MsgTypes getMsgType(char* msg) {
-		MsgTypes rtn;
-		memcpy(&rtn, msg, sizeof(MsgTypes));
+	MsgTypes::Types getMsgType(char* msg) {
+		MsgTypes::Types rtn;
+		memcpy(&rtn, msg, sizeof(MsgTypes::Types));
 		return rtn;
 	}
 
 	string getMsgId(char* msg) {
-		msg += sizeof(MsgTypes);
+		msg += sizeof(MsgTypes::Types);
 		Address idAddr;
 		unsigned long idPeriodCnt;
 		memcpy(&idAddr, msg, sizeof(Address));
@@ -621,8 +649,8 @@ public:
 class MsgHelper {
 public:
 	static const vector<string> msgTypeStrs;
-	static MsgTypes getMsgType(char* data);
-	static string getMsgTypeStr(MsgTypes mt);
+	static MsgTypes::Types getMsgType(char* data);
+	static string getMsgTypeStr(MsgTypes::Types mt);
 };
 
 #endif /* _MP1NODE_H_ */

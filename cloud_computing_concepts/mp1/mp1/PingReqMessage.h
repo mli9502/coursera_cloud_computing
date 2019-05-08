@@ -6,7 +6,7 @@
 class PingReqMessage : public BaseMessage {
 public:
     PingReqMessage() : BaseMessage() {}
-    PingReqMessage(MsgTypes msgType,
+    PingReqMessage(MsgTypes::Types msgType,
                     Address source,
                     Address route,
                     Address destination,
