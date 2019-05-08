@@ -25,8 +25,8 @@ public:
         return incarnation;
     }
     string getId() override;
-    void decode(string msg) override;
-    string encode() override;
+    void decode(const vector<char>& msg) override;
+    vector<char> encode() override;
     void onReceiveHandler(MP1Node& state) override;
 
     void printMsg() override;

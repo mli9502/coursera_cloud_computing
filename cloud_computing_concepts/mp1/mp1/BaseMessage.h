@@ -43,8 +43,8 @@ public:
     // PING_REQ: source|route|destination|protocol_period.
     // ACK: destination|source|protocol_period.
     virtual string getId() = 0;
-    virtual void decode(string msg) = 0;
-    virtual string encode() = 0;
+    virtual void decode(const vector<char>& msg) = 0;
+    virtual vector<char> encode() = 0;
     // This method implements what we should do when we receive a type of message.
     virtual void onReceiveHandler(MP1Node& state) = 0;
     
