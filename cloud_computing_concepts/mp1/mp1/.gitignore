@@ -1,4 +1,5 @@
 *.o
+*.log
 Application
 .vscode/
 .DS_Store

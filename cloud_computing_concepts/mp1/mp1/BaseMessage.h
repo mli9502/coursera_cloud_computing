@@ -59,9 +59,14 @@ protected:
     vector<FailListEntry> piggybackFailList;
 
     void decodePiggybackLists(char const*& msgPtr) {
+        cout << "In decodePiggybackLists..." << endl;
+        std::cout << "msgPtr before: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
         unsigned numMembershipListEntry;
         MP1Node::copyObj(msgPtr, numMembershipListEntry);
+        std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
+        cout << "numMembershipListEntry: " << std::dec << numMembershipListEntry << endl;
         unsigned totalMembershipListSize = numMembershipListEntry * MembershipListEntry::getEntrySize();
+        cout << "totalMembershipListSize: " << totalMembershipListSize << endl;
         MembershipList::decodeTopKMsg(numMembershipListEntry, vector<char>(msgPtr, msgPtr + totalMembershipListSize), this->piggybackMembershipList);
         
         msgPtr += totalMembershipListSize;
@@ -71,14 +76,28 @@ protected:
         unsigned totalFailListSize = numFailListEntry * FailListEntry::getEntrySize();
         FailList::decodeTopKMsg(numFailListEntry, vector<char>(msgPtr, msgPtr + totalFailListSize), this->piggybackFailList);
     }
-
-    void encodePiggybackLists(char*& msgPtr, const vector<char>& piggybackMembershipListMsg, const vector<char>& piggybackFailListMsg) {
-        unsigned pbMlSize = piggybackMembershipListMsg.size();
-        MP1Node::copyMsg(msgPtr, pbMlSize);
+    /**
+     * Encode the piggybackMembershipList and piggybackFailList and insert into the msg.
+     * Note that the size of msg will be extended by this method.
+     */
+    void encodeAndAppendPiggybackLists(vector<char>& msg) {
+        unsigned prevMsgSize = msg.size();
+        vector<char> piggybackMembershipListMsg = MembershipList::encodeTopKMsg(this->piggybackMembershipList);
+        vector<char> piggybackFailListMsg = FailList::encodeTopKMsg(this->piggybackFailList);
+        // prev_msg_size + pb_ml_entries + pb_ml + pb_fl_entries + pb_fl.
+        unsigned newMsgSize = prevMsgSize + 
+                                sizeof(unsigned) + piggybackMembershipListMsg.size() + 
+                                sizeof(unsigned) + piggybackFailListMsg.size();
+        msg.resize(newMsgSize);
+        char* msgPtr = &(msg[0]) + prevMsgSize;
+        // Insert the number of membership list entries in msg.
+        MP1Node::copyMsg(msgPtr, this->piggybackMembershipList.size());
+        // Insert the actual membership_list.
         memcpy(msgPtr, &piggybackMembershipListMsg[0], piggybackMembershipListMsg.size());
         msgPtr += piggybackMembershipListMsg.size();
-        unsigned pbFlSize = piggybackFailListMsg.size();
-        MP1Node::copyMsg(msgPtr, pbFlSize);
+        // Insert the number of fail list entries in msg.
+        MP1Node::copyMsg(msgPtr, this->piggybackFailList.size());
+        // Insert the actual fail_list.
         memcpy(msgPtr, &piggybackFailListMsg[0], piggybackFailListMsg.size());
         msgPtr += piggybackFailListMsg.size();
     }

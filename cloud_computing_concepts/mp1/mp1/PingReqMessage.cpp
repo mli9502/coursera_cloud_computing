@@ -19,20 +19,13 @@ void PingReqMessage::decode(const vector<char>& msg) {
 // fl: fail_list
 // MsgType|src_address|route|dest_address|protocol_period|pb_ml_size|pb_ml|pb_fl_size|pb_fl|
 vector<char> PingReqMessage::encode() {
-    vector<char> piggybackMembershipListMsg = MembershipList::encodeTopKMsg(this->piggybackMembershipList);
-    vector<char> piggybackFailListMsg = FailList::encodeTopKMsg(this->piggybackFailList);
-    
-    unsigned msgSize = sizeof(MsgTypes::Types) // MsgType
-                        + sizeof(Address) // src_address
-                        + sizeof(Address) // route
-                        + sizeof(Address) // dest_address
-                        + sizeof(unsigned long) // protocol_period
-                        + sizeof(unsigned) // pb_ml_size
-                        + piggybackMembershipListMsg.size() // pb_ml
-                        + sizeof(unsigned) // pb_fl_size
-                        + piggybackFailList.size(); // pb_fl
-    
-    vector<char> msg(msgSize);
+    unsigned msgSizeBeforePiggyback = sizeof(MsgTypes::Types) // MsgType
+                                        + sizeof(Address) // src_address
+                                        + sizeof(Address) // route
+                                        + sizeof(Address) // dest_address
+                                        + sizeof(unsigned long); // protocol_period
+
+    vector<char> msg(msgSizeBeforePiggyback);
     char* msgStart = &msg[0];
 
     MsgTypes::Types type = MsgTypes::PING_REQ;
@@ -42,11 +35,11 @@ vector<char> PingReqMessage::encode() {
     MP1Node::copyMsg(msgStart, this->destination);
     MP1Node::copyMsg(msgStart, this->protocol_period);
 
-    encodePiggybackLists(msgStart, piggybackMembershipListMsg, piggybackFailListMsg);
+    encodeAndAppendPiggybackLists(msg);
 
 #ifdef DEBUGLOG
     cout << "In PingReqMessage::encode()..." << endl;
-    cout << "msgSize: " << msgSize << endl;
+    cout << "msgSize: " << msg.size() << endl;
 #endif
     return msg;
 }
