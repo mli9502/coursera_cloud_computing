@@ -57,6 +57,31 @@ protected:
     unsigned long protocol_period;
     vector<MembershipListEntry> piggybackMembershipList;
     vector<FailListEntry> piggybackFailList;
+
+    void decodePiggybackLists(char const*& msgPtr) {
+        unsigned numMembershipListEntry;
+        MP1Node::copyObj(msgPtr, numMembershipListEntry);
+        unsigned totalMembershipListSize = numMembershipListEntry * MembershipListEntry::getEntrySize();
+        MembershipList::decodeTopKMsg(numMembershipListEntry, vector<char>(msgPtr, msgPtr + totalMembershipListSize), this->piggybackMembershipList);
+        
+        msgPtr += totalMembershipListSize;
+        unsigned numFailListEntry;
+        MP1Node::copyObj(msgPtr, numFailListEntry);
+        // sizeof(unsigned): The leading size.
+        unsigned totalFailListSize = numFailListEntry * FailListEntry::getEntrySize();
+        FailList::decodeTopKMsg(numFailListEntry, vector<char>(msgPtr, msgPtr + totalFailListSize), this->piggybackFailList);
+    }
+
+    void encodePiggybackLists(char*& msgPtr, const vector<char>& piggybackMembershipListMsg, const vector<char>& piggybackFailListMsg) {
+        unsigned pbMlSize = piggybackMembershipListMsg.size();
+        MP1Node::copyMsg(msgPtr, pbMlSize);
+        memcpy(msgPtr, &piggybackMembershipListMsg[0], piggybackMembershipListMsg.size());
+        msgPtr += piggybackMembershipListMsg.size();
+        unsigned pbFlSize = piggybackFailListMsg.size();
+        MP1Node::copyMsg(msgPtr, pbFlSize);
+        memcpy(msgPtr, &piggybackFailListMsg[0], piggybackFailListMsg.size());
+        msgPtr += piggybackFailListMsg.size();
+    }
 };
 
 #endif

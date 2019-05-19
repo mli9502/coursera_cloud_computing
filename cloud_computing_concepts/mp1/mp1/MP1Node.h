@@ -305,20 +305,21 @@ public:
 		return msg;
 	}
 
-	static void decodeTopKMsg(const vector<char>& msg, vector<T>& rtn) {
+	static void decodeTopKMsg(const unsigned numEntries, const vector<char>& msg, vector<T>& rtn) {
 		const char* msgPtr = &msg[0];
 
-		unsigned numEntries = 0;
-		memcpy(&numEntries, msgPtr, sizeof(unsigned));
-#ifdef TEST
-		cout << "numEntries: " << numEntries << endl;
-#endif
-		msgPtr += sizeof(unsigned);
+// 		unsigned numEntries = 0;
+// 		memcpy(&numEntries, msgPtr, sizeof(unsigned));
+// #ifdef TEST
+// 		cout << "numEntries: " << numEntries << endl;
+// #endif
+// 		msgPtr += sizeof(unsigned);
+// 		unsigned startIdx = sizeof(unsigned);
 		unsigned entrySize = T::getEntrySize();
 #ifdef TEST
 		cout << "entrySize: " << entrySize << endl;
 #endif
-		unsigned startIdx = sizeof(unsigned);
+		unsigned startIdx = 0;
 		for(unsigned i = 0; i < numEntries; i ++) {
 			rtn.push_back(T::decodeEntryMsg(vector<char>(msg.begin() + startIdx, msg.begin() + startIdx + entrySize)));
 			startIdx += entrySize;
@@ -640,7 +641,7 @@ public:
 	}
 
 	template <typename T>
-	static void copyObj(char*& msg, T& field) {
+	static void copyObj(char const *& msg, T& field) {
 		memcpy(&field, msg, sizeof(T));
 		msg += sizeof(T);
 	}

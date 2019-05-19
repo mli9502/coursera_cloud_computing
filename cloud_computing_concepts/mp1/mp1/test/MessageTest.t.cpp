@@ -6,10 +6,10 @@
 
 class MessageTestFixture : public ::testing::Test {
 protected:
-    MessageTestFixture() : source("1000:10"), 
-                            destination("1001:10"), 
-                            protocol_period(0), 
-                            incarnation(0) {
+    MessageTestFixture() : protocol_period(1),
+                            incarnation(2),
+                            source("1000:10"), 
+                            destination("1001:10") {
         vector<Address> membershipListAddrs { Address{"0:0"}, Address{"1:1"} };
         vector<MemberTypes> membershipListTypes { MemberTypes::ALIVE, MemberTypes::SUSPECT };
         vector<int> membershipListIncarnations { 0, 1 };
@@ -38,7 +38,7 @@ protected:
 TEST_F(MessageTestFixture, AckMessage) {
     AckMessage am(MsgTypes::ACK, source, destination, protocol_period, incarnation, membershipList, failList);
     am.printMsg();
-    std::string encoded = am.encode();
+    vector<char> encoded = am.encode();
     AckMessage decodedAm;
     decodedAm.decode(encoded);
     decodedAm.printMsg();

@@ -25,8 +25,8 @@ public:
         return route;
     }
     string getId() override;
-    void decode(string msg) override;
-    string encode() override;
+    void decode(const vector<char>& msg) override;
+    vector<char> encode() override;
     void onReceiveHandler(MP1Node& state) override;
     // TODO: Need to implement this properly.
     void printMsg() override {}

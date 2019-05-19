@@ -11,16 +11,16 @@ void AckMessage::decode(const vector<char>& msg) {
     for(unsigned i = 0; i < msg.size(); i ++) {
         std::cout << std::bitset<8>(unsigned(msg[i])) << std::endl; 
     }
-    char* msgPtr = const_cast<char*>(&(msg[0]));
+    char const* msgPtr = &(msg[0]);
     std::cout << sizeof(MsgTypes::Types) << std::endl;
-    std::cout << "msgPtr before: " << std::hex << static_cast<void*>(msgPtr) << std::endl;
+    std::cout << "msgPtr before: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     MP1Node::copyObj(msgPtr, this->msgType);
-    std::cout << "msgPtr after: " << std::hex << static_cast<void*>(msgPtr) << std::endl;
+    std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     std::cout << sizeof(Address) << std::endl;
     std::cout << "msgType: " << MsgTypes::to_string(this->msgType) << std::endl;
-    std::cout << "msgPtr before: " << std::hex << static_cast<void*>(msgPtr) << std::endl;
+    std::cout << "msgPtr before: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     MP1Node::copyObj(msgPtr, this->source);
-    std::cout << "msgPtr after: " << std::hex << static_cast<void*>(msgPtr) << std::endl;
+    std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     std::cout << "source: " << this->source.getAddress() << std::endl;
     MP1Node::copyObj(msgPtr, this->destination);
     std::cout << "destination: " << this->destination.getAddress() << std::endl;
@@ -29,20 +29,7 @@ void AckMessage::decode(const vector<char>& msg) {
     MP1Node::copyObj(msgPtr, this->incarnation);
     std::cout << "incarnation: " << this->incarnation << std::endl;
     return;
-    unsigned startIdx = msgPtr - &msg[0];
-    char* tmpPtr = const_cast<char*>(&msg[0]) + startIdx;
-    unsigned numMembershipListEntry;
-    MP1Node::copyObj(tmpPtr, numMembershipListEntry);
-    unsigned totalMembershipListSize = sizeof(unsigned) + numMembershipListEntry * MembershipListEntry::getEntrySize();
-    MembershipList::decodeTopKMsg(vector<char>(msg.begin() + startIdx, msg.begin() + startIdx + totalMembershipListSize), this->piggybackMembershipList);
-    
-    tmpPtr += totalMembershipListSize;
-    startIdx += totalMembershipListSize;
-    unsigned numFailListEntry;
-    MP1Node::copyObj(tmpPtr, numFailListEntry);
-    // sizeof(unsigned): The leading size.
-    unsigned totalFailListSize = sizeof(unsigned) + numFailListEntry * FailListEntry::getEntrySize();
-    FailList::decodeTopKMsg(vector<char>(msg.begin() + startIdx, msg.begin() + startIdx + totalFailListSize), this->piggybackFailList);
+    decodePiggybackLists(msgPtr);
 }
 
 // pb: piggyback
@@ -74,14 +61,8 @@ vector<char> AckMessage::encode() {
     MP1Node::copyMsg(msgStart, this->destination);
     MP1Node::copyMsg(msgStart, this->protocol_period);
     MP1Node::copyMsg(msgStart, this->incarnation);
-    unsigned pbMlSize = this->piggybackMembershipList.size();
-    MP1Node::copyMsg(msgStart, pbMlSize);
-    memcpy(msgStart, &piggybackMembershipListMsg[0], piggybackMembershipListMsg.size());
-    msgStart += piggybackMembershipListMsg.size();
-    unsigned pbFlSize = this->piggybackFailList.size();
-    MP1Node::copyMsg(msgStart, pbFlSize);
-    memcpy(msgStart, &piggybackFailListMsg[0], piggybackFailListMsg.size());
-    msgStart += piggybackFailListMsg.size();
+
+    encodePiggybackLists(msgStart, piggybackMembershipListMsg, piggybackFailListMsg);
 
 #ifdef DEBUGLOG
     cout << "In AckMessage::encode()..." << endl;

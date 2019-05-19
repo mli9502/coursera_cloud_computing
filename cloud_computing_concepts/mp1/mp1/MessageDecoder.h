@@ -12,8 +12,8 @@
  */ 
 class MessageDecoder {
 public:
-    static MsgTypes::Types getTypeFromMsg(const string& msg);
-    static shared_ptr<BaseMessage> decode(const string& msg);
+    static MsgTypes::Types getTypeFromMsg(const vector<char>& msg);
+    static shared_ptr<BaseMessage> decode(const vector<char>& msg);
 };
 
 #endif
