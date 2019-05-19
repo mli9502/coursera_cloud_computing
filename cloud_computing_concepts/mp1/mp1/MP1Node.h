@@ -16,6 +16,7 @@
 #include "Queue.h"
 
 #include "TimeoutMap.h"
+#include "util.h"
 
 #include <unordered_map>
 #include <list>
@@ -148,16 +149,13 @@ public:
 	}
 
 	// Convert a msg back to entry.
-	static MembershipListEntry decodeEntryMsg(const vector<char>& msg) {
-		const char* msgPtr = &msg[0];
+	static MembershipListEntry decodeEntryMsg(char const*& msgPtr) {
 		Address addr;
 		MemberTypes type;
 		long incarnationNum = 0;
-		memcpy(&addr, msgPtr, sizeof(Address));
-		msgPtr += sizeof(Address);
-		memcpy(&type, msgPtr, sizeof(MemberTypes));
-		msgPtr += sizeof(MemberTypes);
-		memcpy(&incarnationNum, msgPtr, sizeof(long));
+		copyObj(msgPtr, addr);
+		copyObj(msgPtr, type);
+		copyObj(msgPtr, incarnationNum);
 		return MembershipListEntry(addr, type, incarnationNum);
 	}
 
@@ -195,15 +193,11 @@ public:
 	}
 
 	// Convert a msg back to entry.
-	// NOTE: FailList and MembershipList entries only contain 
-	static FailListEntry decodeEntryMsg(const vector<char>& msg) {
+	static FailListEntry decodeEntryMsg(char const*& msgPtr) {
 		Address addr;
 		MemberTypes type;
-		long incarnationNum = 0;
-		const char* msgPtr = &msg[0];
-		memcpy(&addr, msgPtr, sizeof(Address));
-		msgPtr += sizeof(Address);
-		memcpy(&type, msgPtr, sizeof(MemberTypes));
+		copyObj(msgPtr, addr);
+		copyObj(msgPtr, type);
 		return FailListEntry(addr);
 	}
 
@@ -305,24 +299,15 @@ public:
 		return msg;
 	}
 
-	static void decodeTopKMsg(const unsigned numEntries, const vector<char>& msg, vector<T>& rtn) {
-		const char* msgPtr = &msg[0];
-
-// 		unsigned numEntries = 0;
-// 		memcpy(&numEntries, msgPtr, sizeof(unsigned));
-// #ifdef TEST
-// 		cout << "numEntries: " << numEntries << endl;
-// #endif
-// 		msgPtr += sizeof(unsigned);
-// 		unsigned startIdx = sizeof(unsigned);
-		unsigned entrySize = T::getEntrySize();
+	static void decodeTopKMsg(char const*& msgPtr, vector<T>& rtn) {
+		unsigned numEntries = 0;
+		memcpy(&numEntries, msgPtr, sizeof(unsigned));
 #ifdef TEST
-		cout << "entrySize: " << entrySize << endl;
+		cout << "decodeTopKMsg::numEntries: " << numEntries << endl;
 #endif
-		unsigned startIdx = 0;
+		msgPtr += sizeof(unsigned);
 		for(unsigned i = 0; i < numEntries; i ++) {
-			rtn.push_back(T::decodeEntryMsg(vector<char>(msg.begin() + startIdx, msg.begin() + startIdx + entrySize)));
-			startIdx += entrySize;
+			rtn.push_back(T::decodeEntryMsg(msgPtr));
 		}
 	}
 
@@ -632,18 +617,6 @@ public:
 
 	static string getId(Address idAddr, unsigned long idPeriodCnt) {
 		return idAddr.getAddress() + ":" + to_string(idPeriodCnt);
-	}
-
-	template <typename T>
-	static void copyMsg(char*& msg, T field) {
-		memcpy(msg, &field, sizeof(T));
-		msg += sizeof(T);
-	}
-
-	template <typename T>
-	static void copyObj(char const *& msg, T& field) {
-		memcpy(&field, msg, sizeof(T));
-		msg += sizeof(T);
 	}
 };
 

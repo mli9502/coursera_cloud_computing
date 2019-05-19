@@ -6,11 +6,11 @@ string PingReqMessage::getId() {
 
 void PingReqMessage::decode(const vector<char>& msg) {
     char const* msgPtr = &(msg[0]);
-    MP1Node::copyObj(msgPtr, this->msgType);
-    MP1Node::copyObj(msgPtr, this->source);
-    MP1Node::copyObj(msgPtr, this->route);
-    MP1Node::copyObj(msgPtr, this->destination);
-    MP1Node::copyObj(msgPtr, this->protocol_period);
+    copyObj(msgPtr, this->msgType);
+    copyObj(msgPtr, this->source);
+    copyObj(msgPtr, this->route);
+    copyObj(msgPtr, this->destination);
+    copyObj(msgPtr, this->protocol_period);
     decodePiggybackLists(msgPtr);
 }
 
@@ -29,11 +29,11 @@ vector<char> PingReqMessage::encode() {
     char* msgStart = &msg[0];
 
     MsgTypes::Types type = MsgTypes::PING_REQ;
-    MP1Node::copyMsg(msgStart, type);
-    MP1Node::copyMsg(msgStart, this->source);
-    MP1Node::copyMsg(msgStart, this->route);
-    MP1Node::copyMsg(msgStart, this->destination);
-    MP1Node::copyMsg(msgStart, this->protocol_period);
+    copyMsg(msgStart, type);
+    copyMsg(msgStart, this->source);
+    copyMsg(msgStart, this->route);
+    copyMsg(msgStart, this->destination);
+    copyMsg(msgStart, this->protocol_period);
 
     encodeAndAppendPiggybackLists(msg);
 

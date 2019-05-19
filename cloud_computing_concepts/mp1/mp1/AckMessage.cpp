@@ -16,19 +16,19 @@ void AckMessage::decode(const vector<char>& msg) {
     char const* msgPtr = &(msg[0]);
     std::cout << sizeof(MsgTypes::Types) << std::endl;
     // std::cout << "msgPtr before: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
-    MP1Node::copyObj(msgPtr, this->msgType);
+    copyObj(msgPtr, this->msgType);
     // std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     // std::cout << sizeof(Address) << std::endl;
     // std::cout << "msgType: " << MsgTypes::to_string(this->msgType) << std::endl;
     // std::cout << "msgPtr before: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
-    MP1Node::copyObj(msgPtr, this->source);
+    copyObj(msgPtr, this->source);
     // std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     // std::cout << "source: " << this->source.getAddress() << std::endl;
-    MP1Node::copyObj(msgPtr, this->destination);
+    copyObj(msgPtr, this->destination);
     // std::cout << "destination: " << this->destination.getAddress() << std::endl;
-    MP1Node::copyObj(msgPtr, this->protocol_period);
+    copyObj(msgPtr, this->protocol_period);
     // std::cout << "protocol_period: " << this->protocol_period << std::endl;
-    MP1Node::copyObj(msgPtr, this->incarnation);
+    copyObj(msgPtr, this->incarnation);
     std::cout << "incarnation: " << this->incarnation << std::endl;
     std::cout << "msgPtr after incarnation: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     // return;
@@ -50,11 +50,11 @@ vector<char> AckMessage::encode() {
     char* msgStart = &msg[0];
 
     MsgTypes::Types type = MsgTypes::ACK;
-    MP1Node::copyMsg(msgStart, type);
-    MP1Node::copyMsg(msgStart, this->source);
-    MP1Node::copyMsg(msgStart, this->destination);
-    MP1Node::copyMsg(msgStart, this->protocol_period);
-    MP1Node::copyMsg(msgStart, this->incarnation);
+    copyMsg(msgStart, type);
+    copyMsg(msgStart, this->source);
+    copyMsg(msgStart, this->destination);
+    copyMsg(msgStart, this->protocol_period);
+    copyMsg(msgStart, this->incarnation);
 
     encodeAndAppendPiggybackLists(msg);
 
