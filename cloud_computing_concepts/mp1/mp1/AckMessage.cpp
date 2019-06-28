@@ -7,31 +7,12 @@ string AckMessage::getId() {
 }
 
 void AckMessage::decode(const vector<char>& msg) {
-    std::cout << "In AckMessage::decode:" << std::endl;
-    for(unsigned i = 0; i < msg.size(); i ++) {
-        // std::cout << msg[i];
-        std::cout << std::bitset<8>(unsigned(msg[i])) << ":"; 
-    }
-    std::cout << endl;
     char const* msgPtr = &(msg[0]);
-    std::cout << sizeof(MsgTypes::Types) << std::endl;
-    // std::cout << "msgPtr before: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     copyObj(msgPtr, this->msgType);
-    // std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
-    // std::cout << sizeof(Address) << std::endl;
-    // std::cout << "msgType: " << MsgTypes::to_string(this->msgType) << std::endl;
-    // std::cout << "msgPtr before: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     copyObj(msgPtr, this->source);
-    // std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
-    // std::cout << "source: " << this->source.getAddress() << std::endl;
     copyObj(msgPtr, this->destination);
-    // std::cout << "destination: " << this->destination.getAddress() << std::endl;
     copyObj(msgPtr, this->protocol_period);
-    // std::cout << "protocol_period: " << this->protocol_period << std::endl;
     copyObj(msgPtr, this->incarnation);
-    std::cout << "incarnation: " << this->incarnation << std::endl;
-    std::cout << "msgPtr after incarnation: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
-    // return;
     decodePiggybackLists(msgPtr);
 }
 
@@ -58,10 +39,6 @@ vector<char> AckMessage::encode() {
 
     encodeAndAppendPiggybackLists(msg);
 
-#ifdef DEBUGLOG
-    cout << "In AckMessage::encode()..." << endl;
-    cout << "msgSize: " << msg.size() << endl;
-#endif
     return msg;
 }
 

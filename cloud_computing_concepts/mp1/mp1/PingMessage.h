@@ -22,8 +22,7 @@ public:
     void decode(const vector<char>& msg) override;
     vector<char> encode() override;
     void onReceiveHandler(MP1Node& state) override;
-    // TODO: Implement this properly...
-    void printMsg() override {};
+    void printMsg() override;
 };
 
 #endif

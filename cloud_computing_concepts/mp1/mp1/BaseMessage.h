@@ -47,7 +47,6 @@ public:
     virtual vector<char> encode() = 0;
     // This method implements what we should do when we receive a type of message.
     virtual void onReceiveHandler(MP1Node& state) = 0;
-    
     virtual void printMsg() = 0;
 
 protected:
@@ -59,12 +58,8 @@ protected:
     vector<FailListEntry> piggybackFailList;
 
     void decodePiggybackLists(char const*& msgPtr) {
-        cout << "In decodePiggybackLists..." << endl;
-        std::cout << "msgPtr before: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
         MembershipList::decodeTopKMsg(msgPtr, this->piggybackMembershipList);
-        std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
         FailList::decodeTopKMsg(msgPtr, this->piggybackFailList);
-        std::cout << "msgPtr after: " << std::hex << static_cast<void const*>(msgPtr) << std::endl;
     }
     /**
      * Encode the piggybackMembershipList and piggybackFailList and insert into the msg.
@@ -73,7 +68,6 @@ protected:
     void encodeAndAppendPiggybackLists(vector<char>& msg) {
         unsigned prevMsgSize = msg.size();
         vector<char> piggybackMembershipListMsg = MembershipList::encodeTopKMsg(this->piggybackMembershipList);
-        cout << "encode: piggybackMembershipListMsg.size() == " << piggybackMembershipListMsg.size() << endl;
         vector<char> piggybackFailListMsg = FailList::encodeTopKMsg(this->piggybackFailList);
         // prev_msg_size + (pb_ml_entries + pb_ml) + (pb_fl_entries + pb_fl).
         unsigned newMsgSize = prevMsgSize + 

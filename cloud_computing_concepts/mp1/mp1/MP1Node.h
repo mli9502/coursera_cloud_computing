@@ -235,43 +235,6 @@ public:
 		cerr << "Address " << address << " is not in list..." << endl;
 		return false; 
 	}
-	// number_of_entries|entry|entry|...
-	// TODO: Need to update this method to take in the list of entries we want to encode.
-	// 		 Basically, we want to seperate this with getTopK().
-	//		 We want to getTopK first, then, pass the rtn from getTopK to genTopKMsg.
-	//		 So, the BaseMessage::encode() do not have to take in any argument.
-// 	pair<unsigned, char*> genTopKMsg(int k, int maxPiggybackCnt) {
-// 		if(this->topKMsg) {
-// 			delete [] this->topKMsg;
-// 		}
-// 		vector<T> topEntries = this->getTopK(k, maxPiggybackCnt);
-// #ifdef TEST
-// 		cout << "----------------------------------------" << endl;
-// 		for(auto& entry : topEntries) {
-// 			cout << entry << endl;
-// 		}
-// 		cout << "----------------------------------------" << endl;
-// #endif
-// 		vector<pair<unsigned, char*>> topMsgs;
-// 		for(auto& entry : topEntries) {
-// 			topMsgs.push_back(make_pair(entry.getEntrySize(), entry.getEntryMsg()));
-// 		}
-// 		unsigned numMsgs = topMsgs.size();
-// 		// get total msg size.
-// 		unsigned msgSize = sizeof(unsigned);
-// 		for(auto& entry : topMsgs) {
-// 			msgSize += entry.first;
-// 		}
-// 		this->topKMsg = new char[msgSize];
-// 		auto tmpPtr = topKMsg;
-// 		memcpy(tmpPtr, &numMsgs, sizeof(unsigned));
-// 		tmpPtr += sizeof(unsigned);
-// 		for(auto& entry : topMsgs) {
-// 			memcpy(tmpPtr, entry.second, entry.first);
-// 			tmpPtr += entry.first;
-// 		}
-// 		return make_pair(msgSize, this->topKMsg);
-// 	}
 
 	static vector<char> encodeTopKMsg(const vector<T>& topEntries) {
 #ifdef TEST

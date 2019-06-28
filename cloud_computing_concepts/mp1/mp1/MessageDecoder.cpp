@@ -18,7 +18,6 @@ shared_ptr<BaseMessage> decode(const vector<char>& msg) {
         case MsgTypes::PING: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type PING!" << endl;
-            // cout << "msg: " << msg << endl;
 #endif
             rtn.reset(new PingMessage());
             break;
@@ -26,7 +25,6 @@ shared_ptr<BaseMessage> decode(const vector<char>& msg) {
         case MsgTypes::PING_REQ: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type PING_REQ!" << endl;
-            // cout << "msg: " << msg << endl;
 #endif  
             rtn.reset(new PingReqMessage());
             break;
@@ -34,7 +32,6 @@ shared_ptr<BaseMessage> decode(const vector<char>& msg) {
         case MsgTypes::ACK: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type ACK!" << endl;
-            // cout << "msg: " << msg << endl;
 #endif
             rtn.reset(new AckMessage());
             break;            
@@ -43,7 +40,6 @@ shared_ptr<BaseMessage> decode(const vector<char>& msg) {
 #ifdef DEBUGLOG
             cout << "Receiving message of types that are currently not supported!" << endl;
             cout << "type: " << type << endl;
-            // cout << "msg: " << msg << endl;
 #endif
             break;
         }

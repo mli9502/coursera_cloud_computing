@@ -41,6 +41,24 @@ vector<char> PingMessage::encode() {
     return msg;
 }
 
+void PingMessage::printMsg() {
+    cout << "########## PingMessage ##########" << endl;
+    cout << "# message type: " << MsgTypes::to_string(msgType) << endl;
+    cout << "# id: " << getId() << endl;
+    cout << "# source: " << source.getAddress() << endl;
+    cout << "# destination: " << destination.getAddress() << endl;
+    cout << "# protocol_period: " << protocol_period << endl;
+    cout << "# piggybackMembershipList: " << endl;
+    for(auto& entry : piggybackMembershipList) {
+        cout << "# " << entry << endl;
+    }
+    cout << "# piggybackFailList: " << endl;
+    for(auto& entry : piggybackFailList) {
+        cout << "# " << entry << endl;
+    }
+    cout << "########## ########## #########" << endl;
+}
+
 void PingMessage::onReceiveHandler(MP1Node& state) {
     // TODO: fill this in.
 #ifdef DEBUGLOG

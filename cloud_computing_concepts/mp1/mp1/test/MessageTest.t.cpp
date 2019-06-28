@@ -2,7 +2,31 @@
 
 #include "Member.h"
 #include "AckMessage.h"
+#include "PingMessage.h"
+#include "PingReqMessage.h"
 #include "gtest/gtest.h"
+
+namespace 
+{
+
+template <typename T>
+bool isListEq(const T& v1, const T& v2) {
+    if(v1.size() != v2.size()) {
+        return false;
+    }
+    auto it1 = v1.begin();
+    auto it2 = v2.begin();
+    while(it1 != v1.end() && it2 != v2.end()) {
+        if(*it1 != *it2) {
+            return false;
+        }
+        it1 ++;
+        it2 ++;
+    }
+    return true;
+}
+
+}
 
 class MessageTestFixture : public ::testing::Test {
 protected:
@@ -42,4 +66,30 @@ TEST_F(MessageTestFixture, AckMessage) {
     AckMessage decodedAm;
     decodedAm.decode(encoded);
     decodedAm.printMsg();
+    // Encode the decoded message.
+    vector<char> reEncoded = decodedAm.encode();
+    EXPECT_TRUE(isListEq(encoded, reEncoded));
+}
+
+TEST_F(MessageTestFixture, PingMessage) {
+    PingMessage pm(MsgTypes::PING, source, destination, protocol_period, membershipList, failList);
+    pm.printMsg();
+    vector<char> encoded = pm.encode();
+    PingMessage decodedPm;
+    decodedPm.decode(encoded);
+    decodedPm.printMsg();
+    vector<char> reEncoded = decodedPm.encode();
+    EXPECT_TRUE(isListEq(encoded, reEncoded));
+}
+
+TEST_F(MessageTestFixture, PingReqMessage) {
+    Address route { "1002:10" };
+    PingReqMessage prm(MsgTypes::PING_REQ, source, route, destination, protocol_period, membershipList, failList);
+    prm.printMsg();
+    vector<char> encoded = prm.encode();
+    PingReqMessage decodedPrm;
+    decodedPrm.decode(encoded);
+    decodedPrm.printMsg();
+    vector<char> reEncoded = decodedPrm.encode();
+    EXPECT_TRUE(isListEq(encoded, reEncoded));
 }
