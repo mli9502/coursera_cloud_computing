@@ -20,6 +20,8 @@ Application::Application(char *infile) {
 	en = new EmulNet(par);
 	mp1 = (MP1Node **) malloc(par->EN_GPSZ * sizeof(MP1Node *));
 
+	cout << "@mli: Application constructor after constructing mp1." << endl;
+
 	/*
 	 * Init all nodes
 	 */
@@ -107,6 +109,7 @@ void Application::mp1Run() {
 	}
 
 	// For all the nodes in the system
+	// @mli: EN_GPSZ == 10, STEP_RATE == .25
 	for( i = par->EN_GPSZ - 1; i >= 0; i-- ) {
 
 		/*
@@ -115,6 +118,8 @@ void Application::mp1Run() {
 		if( par->getcurrtime() == (int)(par->STEP_RATE*i) ) {
 			// introduce the ith node into the system at time STEP_RATE*i
 			mp1[i]->nodeStart(JOINADDR, par->PORTNUM);
+			// @mli: log timestamp.
+			cout << "@mli: ts==>[" << par->getcurrtime() << "]: " << endl;
 			cout<<i<<"-th introduced node is assigned with the address: "<<mp1[i]->getMemberNode()->addr.getAddress() << endl;
 			nodeCount += i;
 		}

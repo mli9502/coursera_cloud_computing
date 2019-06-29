@@ -4,6 +4,8 @@
 #include "AckMessage.h"
 #include "PingMessage.h"
 #include "PingReqMessage.h"
+#include "JoinReqMessage.h"
+
 #include "gtest/gtest.h"
 
 namespace 
@@ -91,5 +93,16 @@ TEST_F(MessageTestFixture, PingReqMessage) {
     decodedPrm.decode(encoded);
     decodedPrm.printMsg();
     vector<char> reEncoded = decodedPrm.encode();
+    EXPECT_TRUE(isListEq(encoded, reEncoded));
+}
+
+TEST_F(MessageTestFixture, JoinReqMessage) {
+    JoinReqMessage jrm(MsgTypes::JOINREQ, source, destination);
+    jrm.printMsg();
+    vector<char> encoded = jrm.encode();
+    JoinReqMessage decodedJrm;
+    decodedJrm.decode(encoded);
+    decodedJrm.printMsg();
+    vector<char> reEncoded = decodedJrm.encode();
     EXPECT_TRUE(isListEq(encoded, reEncoded));
 }

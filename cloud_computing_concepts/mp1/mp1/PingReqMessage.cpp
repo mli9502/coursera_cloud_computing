@@ -36,11 +36,7 @@ vector<char> PingReqMessage::encode() {
     copyMsg(msgStart, this->protocol_period);
 
     encodeAndAppendPiggybackLists(msg);
-
-#ifdef DEBUGLOG
-    cout << "In PingReqMessage::encode()..." << endl;
-    cout << "msgSize: " << msg.size() << endl;
-#endif
+    
     return msg;
 }
 

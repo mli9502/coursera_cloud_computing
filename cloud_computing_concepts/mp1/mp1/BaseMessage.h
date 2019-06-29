@@ -39,6 +39,8 @@ public:
     const vector<FailListEntry>& getFailListInPiggyback() {
         return piggybackFailList;
     } 
+    // JOIN_REQ: source|destination
+    // JOIN_RESP: source|destination
     // PING: source|destination|protocol_period.
     // PING_REQ: source|route|destination|protocol_period.
     // ACK: destination|source|protocol_period.

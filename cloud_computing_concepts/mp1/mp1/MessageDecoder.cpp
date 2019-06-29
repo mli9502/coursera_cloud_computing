@@ -8,33 +8,44 @@ MsgTypes::Types MessageDecoder::getTypeFromMsg(const vector<char>& msg) {
     return rtn;
 }
 
+MsgTypes::Types MessageDecoder::getTypeFromMsg(char* msg, unsigned size) {
+    vector<char> msgVec(msg, msg + size);
+    return MessageDecoder::getTypeFromMsg(msgVec);
+}
+
 // Every time a node receives a message, 
 // we should call this method to decode the message.
 // Then, use the return pointer, we can call the onReceiveHandler method to handle the received message.
-shared_ptr<BaseMessage> decode(const vector<char>& msg) {
+shared_ptr<BaseMessage> MessageDecoder::decode(const vector<char>& msg) {
     MsgTypes::Types type = MessageDecoder::getTypeFromMsg(msg);
     shared_ptr<BaseMessage> rtn;
     switch(type) {
-        case MsgTypes::PING: {
+        case MsgTypes::Types::PING: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type PING!" << endl;
 #endif
             rtn.reset(new PingMessage());
             break;
         }
-        case MsgTypes::PING_REQ: {
+        case MsgTypes::Types::PING_REQ: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type PING_REQ!" << endl;
 #endif  
             rtn.reset(new PingReqMessage());
             break;
         }
-        case MsgTypes::ACK: {
+        case MsgTypes::Types::ACK: {
 #ifdef DEBUGLOG
             cout << "Receiving message of type ACK!" << endl;
 #endif
             rtn.reset(new AckMessage());
             break;            
+        }
+        case MsgTypes::Types::JOINREQ: {
+#ifdef DEBUGLOG
+            cout << "Receiving message of type JOINREQ!" << endl;
+#endif
+            rtn.reset(new JoinReqMessage());
         }
         default: {
 #ifdef DEBUGLOG
@@ -50,4 +61,9 @@ shared_ptr<BaseMessage> decode(const vector<char>& msg) {
     // Actually decode the message.
     rtn->decode(msg);
     return rtn;
+}
+
+shared_ptr<BaseMessage> MessageDecoder::decode(char* msg, unsigned size) {
+    vector<char> msgVec(msg, msg + size);
+    return MessageDecoder::decode(msgVec);
 }

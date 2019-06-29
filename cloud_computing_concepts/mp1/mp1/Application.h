@@ -24,7 +24,8 @@ extern int nodeCount;
  * Macros
  */
 #define ARGS_COUNT 2
-#define TOTAL_RUNNING_TIME 700
+// #define TOTAL_RUNNING_TIME 700
+#define TOTAL_RUNNING_TIME 15
 
 /**
  * CLASS NAME: Application

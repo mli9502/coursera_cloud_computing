@@ -8,7 +8,7 @@
 
 // FIXME: Need to remove this definiation.
 // This is only used for testing.
-#define TEST
+// #define TEST
 
 void handler(int sig) {
 	void *array[10];

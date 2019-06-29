@@ -22,7 +22,7 @@
 #include <list>
 #include <random>
 
-#define TEST
+// #define TEST
 
 /**
  * Macros
@@ -237,13 +237,6 @@ public:
 	}
 
 	static vector<char> encodeTopKMsg(const vector<T>& topEntries) {
-#ifdef TEST
-		cout << "----------------------------------------" << endl;
-		for(auto& entry : topEntries) {
-			cout << entry << endl;
-		}
-		cout << "----------------------------------------" << endl;
-#endif
 		vector<char> msg;
 		// Insert number of entries at the start of message.
 		vector<char> entryCntMsg(sizeof(unsigned));
@@ -256,18 +249,12 @@ public:
 			msg.insert(msg.end(), entryMsg.begin(), entryMsg.end());
 		}
 
-#ifdef TEST
-		cout << "msgSize: " << msg.size() << endl;
-#endif
 		return msg;
 	}
 
 	static void decodeTopKMsg(char const*& msgPtr, vector<T>& rtn) {
 		unsigned numEntries = 0;
 		memcpy(&numEntries, msgPtr, sizeof(unsigned));
-#ifdef TEST
-		cout << "decodeTopKMsg::numEntries: " << numEntries << endl;
-#endif
 		msgPtr += sizeof(unsigned);
 		for(unsigned i = 0; i < numEntries; i ++) {
 			rtn.push_back(T::decodeEntryMsg(msgPtr));
@@ -290,13 +277,6 @@ public:
 			tmpVec.push_back({entryVec[i], i});
 		}
 		this->reorderVec(tmpVec);
-#ifdef TEST
-		cout << "+++++++++++++++++++++++++++++" << endl;
-		for(auto& entry : tmpVec) {
-			cout << entry.first << endl;
-		}
-		cout << "+++++++++++++++++++++++++++++" << endl;
-#endif
 		auto it = tmpVec.begin();
 		while(rtn.size() < k && it != tmpVec.end()) {
 			if(it->first.reachMaxPiggybackCnt(maxPiggybackCnt)) {

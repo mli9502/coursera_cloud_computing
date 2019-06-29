@@ -4,6 +4,7 @@
 #include "PingMessage.h"
 #include "PingReqMessage.h"
 #include "AckMessage.h"
+#include "JoinReqMessage.h"
 
 /**
  * class used to decode the messages.
@@ -13,7 +14,9 @@
 class MessageDecoder {
 public:
     static MsgTypes::Types getTypeFromMsg(const vector<char>& msg);
+    static MsgTypes::Types getTypeFromMsg(char* msg, unsigned size);
     static shared_ptr<BaseMessage> decode(const vector<char>& msg);
+    static shared_ptr<BaseMessage> decode(char* msg, unsigned size);
 };
 
 #endif

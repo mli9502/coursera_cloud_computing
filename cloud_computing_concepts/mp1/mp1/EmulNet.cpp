@@ -192,6 +192,36 @@ int EmulNet::ENrecv(Address *myaddr, int (* enq)(void *, char *, int), struct ti
  *
  * DESCRIPTION: Cleanup the EmulNet. Called exactly once at the end of the program.
  */
+
+/**
+ * @mli:
+ * In this sample log:
+ * Node 1 sends 0 msg because it is the first node that joins the group.
+ * And it received 9 msg indicating that other 9 nodes joined the group.
+ * This is when TOTAL_RUNNING_TINE == 15.
+ * In this case, all nodes can join. 
+ * A sample log:
+ *  node   1  (   0,    0) (   0,    3) (   0,    4) (   0,    2) (   0,    0)
+ *  node   1 sent_total      0  recv_total      9
+ *  node   2  (   1,    0) (   0,    0) (   0,    0) (   0,    0) (   0,    0)
+ *  node   2 sent_total      1  recv_total      0
+ *  node   3  (   1,    0) (   0,    0) (   0,    0) (   0,    0) (   0,    0)
+ *  node   3 sent_total      1  recv_total      0
+ *  node   4  (   1,    0) (   0,    0) (   0,    0) (   0,    0) (   0,    0)
+ *  node   4 sent_total      1  recv_total      0
+ *  node   5  (   0,    0) (   1,    0) (   0,    0) (   0,    0) (   0,    0)
+ *  node   5 sent_total      1  recv_total      0
+ *  node   6  (   0,    0) (   1,    0) (   0,    0) (   0,    0) (   0,    0)
+ *  node   6 sent_total      1  recv_total      0
+ *  node   7  (   0,    0) (   1,    0) (   0,    0) (   0,    0) (   0,    0)
+ *  node   7 sent_total      1  recv_total      0
+ *  node   8  (   0,    0) (   1,    0) (   0,    0) (   0,    0) (   0,    0)
+ *  node   8 sent_total      1  recv_total      0
+ *  node   9  (   0,    0) (   0,    0) (   1,    0) (   0,    0) (   0,    0)
+ *  node   9 sent_total      1  recv_total      0
+ *  node  10  (   0,    0) (   0,    0) (   1,    0) (   0,    0) (   0,    0)
+ *  node  10 sent_total      1  recv_total      0
+ */
 int EmulNet::ENcleanup() {
 	emulnet.nextid=0;
 	int i, j;
