@@ -270,7 +270,7 @@ public:
 	 * 
 	 * NOTE: we do not remove entries that exceeds piggyback-cnt threshold from the membership list, we simply ignore them.
 	 */
-	vector<T> getTopK(int k, int maxPiggybackCnt) {
+	vector<T> getTopK(int K, int maxPiggybackCnt) {
 		vector<T> rtn;
 		vector<pair<T, int>> tmpVec;
 		for(int i = 0; i < entryVec.size(); i ++) {
@@ -278,13 +278,25 @@ public:
 		}
 		this->reorderVec(tmpVec);
 		auto it = tmpVec.begin();
-		while(rtn.size() < k && it != tmpVec.end()) {
+		while(rtn.size() < K && it != tmpVec.end()) {
 			if(it->first.reachMaxPiggybackCnt(maxPiggybackCnt)) {
 				break;
 			}
 			rtn.push_back(it->first);
 			entryVec[it->second].incPiggybackCnt();
 			it ++;
+		}
+		return rtn;
+	}
+
+	/**
+	 * Get the first K entries. This is used by JoinResp message to send membership & fail list entries.
+	 * We get the first instead of get random K to make sure the result is consistant.
+	 */
+	vector<T> getFirstK(int K) {
+		vector<T> rtn;
+		for(unsigned i = 0; i < entryVec.size() && i < K; i ++) {
+			rtn.push_back(entryVec.at(i));
 		}
 		return rtn;
 	}
@@ -336,6 +348,10 @@ public:
 	unsigned lastPingIdx;
 	MembershipList() : EntryList(), lastPingIdx(0) {}
 	~MembershipList() = default;
+
+	bool insertEntry(const Address& addr) {
+		return insertEntry(MembershipListEntry(addr));
+	}
 
 	// Insert membership list entry we received.
 	// If the address of the entry is already present in the list, we update the entry using override rules.
@@ -530,6 +546,10 @@ public:
 	Address getJoinAddress();
 	void initMemberListTable(Member *memberNode);
 	void printAddress(Address *addr);
+
+	MembershipList& getMembershipList();
+	FailList& getFailList();
+	
 	virtual ~MP1Node();
 
 	pair<unsigned, char*> genPingMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt);

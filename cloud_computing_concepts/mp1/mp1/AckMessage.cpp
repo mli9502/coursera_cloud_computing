@@ -42,11 +42,12 @@ vector<char> AckMessage::encode() {
     return msg;
 }
 
-void AckMessage::onReceiveHandler(MP1Node& state) {
+shared_ptr<BaseMessage> AckMessage::onReceiveHandler(MP1Node& node) {
     // TODO: Fill this in.
 #ifdef DEBUGLOG
     cout << "In AckMessage::onReceiveHandler..." << endl;
 #endif
+    return shared_ptr<BaseMessage>();
 }
 
 void AckMessage::printMsg() {

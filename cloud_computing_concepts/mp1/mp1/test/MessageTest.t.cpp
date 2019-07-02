@@ -5,6 +5,7 @@
 #include "PingMessage.h"
 #include "PingReqMessage.h"
 #include "JoinReqMessage.h"
+#include "JoinRespMessage.h"
 
 #include "gtest/gtest.h"
 
@@ -101,6 +102,17 @@ TEST_F(MessageTestFixture, JoinReqMessage) {
     jrm.printMsg();
     vector<char> encoded = jrm.encode();
     JoinReqMessage decodedJrm;
+    decodedJrm.decode(encoded);
+    decodedJrm.printMsg();
+    vector<char> reEncoded = decodedJrm.encode();
+    EXPECT_TRUE(isListEq(encoded, reEncoded));
+}
+
+TEST_F(MessageTestFixture, JoinRespMessage) {
+    JoinRespMessage jrm(MsgTypes::JOINRESP, source, destination, membershipList, failList);
+    jrm.printMsg();
+    vector<char> encoded = jrm.encode();
+    JoinRespMessage decodedJrm;
     decodedJrm.decode(encoded);
     decodedJrm.printMsg();
     vector<char> reEncoded = decodedJrm.encode();

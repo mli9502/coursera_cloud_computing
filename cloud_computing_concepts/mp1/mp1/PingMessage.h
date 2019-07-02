@@ -21,7 +21,7 @@ public:
     string getId() override;
     void decode(const vector<char>& msg) override;
     vector<char> encode() override;
-    void onReceiveHandler(MP1Node& state) override;
+    shared_ptr<BaseMessage> onReceiveHandler(MP1Node& node) override;
     void printMsg() override;
 };
 

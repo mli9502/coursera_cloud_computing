@@ -33,7 +33,7 @@ vector<char> PingMessage::encode() {
     copyMsg(msgStart, this->protocol_period);
 
     encodeAndAppendPiggybackLists(msg);
-    
+
     return msg;
 }
 
@@ -55,9 +55,10 @@ void PingMessage::printMsg() {
     cout << "########## ########## #########" << endl;
 }
 
-void PingMessage::onReceiveHandler(MP1Node& state) {
+shared_ptr<BaseMessage> PingMessage::onReceiveHandler(MP1Node& node) {
     // TODO: fill this in.
 #ifdef DEBUGLOG
     cout << "In PingMessage::onReceiveHandler..." << endl;
 #endif
+    return shared_ptr<BaseMessage>();
 }

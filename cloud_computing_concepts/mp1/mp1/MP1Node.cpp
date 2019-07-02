@@ -250,7 +250,7 @@ void MP1Node::checkMessages() {
  *
  * DESCRIPTION: Message handler for different message types
  */
-bool MP1Node::recvCallBack(void *env, char *data, int size ) {
+bool MP1Node::recvCallBack(void *env, char *data, int size) {
 	/*
 	 * Your code goes here
 	 */
@@ -261,8 +261,7 @@ bool MP1Node::recvCallBack(void *env, char *data, int size ) {
 #ifdef DEBUGLOG
     msg->printMsg();
 #endif
-    // TODO: If JOINREQ is received, and the current node is the introducer, we send back a list with fixed number of members to the newly joined node.
-    // TODO: If JOINRESP is received, we set env->inGroup member of this node to true. And also set the membership list with the list in this ace msg.
+    shared_ptr<BaseMessage> resp = msg->onReceiveHandler(*this);
 }
 
 /**
@@ -323,6 +322,14 @@ void MP1Node::printAddress(Address *addr)
 {
     printf("%d.%d.%d.%d:%d \n",  addr->addr[0],addr->addr[1],addr->addr[2],
                                                        addr->addr[3], *(short*)&addr->addr[4]) ;    
+}
+
+MembershipList& MP1Node::getMembershipList() {
+    return this->membershipList;
+}
+
+FailList& MP1Node::getFailList() {
+    return this->failList;
 }
 
 // A msg id consists of id_addr and id_period_cnt.
