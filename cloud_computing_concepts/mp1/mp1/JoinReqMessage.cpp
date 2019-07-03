@@ -38,7 +38,7 @@ bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
 #ifdef DEBUGLOG
     cout << "In JoinReqMessage::onReceiveHandler..." << endl;
 #endif
-    node.getMembershipList().insertEntry(source);
+    node.getMembershipList().appendEntry(source);
     // Construct a JoinResp message.
     // The destination in the decoded message is now source, and source is now destination.
     Address newSource = destination;
@@ -48,7 +48,18 @@ bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
                                                                     newDestination, 
                                                                     node.getMembershipList().getFirstK(JoinRespMessage::MAX_LIST_ENTRY), 
                                                                     node.getFailList().getFirstK(JoinRespMessage::MAX_LIST_ENTRY));
-    // TODO: @7/2/2019: Need to send out this message using emulNet->send.
+    
+    vector<char> encodedResp = respMsg->encode();
+    int sizeSent = node.getEmulNet()->ENsend(&newSource, &newDestination, encodedResp.data(), encodedResp.size());
+    if(sizeSent == 0) {
+#ifdef DEBUGLOG
+        cout << "sizeSent is 0, msg is not sent..." << endl;
+#endif
+    } else {
+#ifdef DEBUGLOG
+        cout << "sizeSent is " << sizeSent << endl;
+#endif
+    }
     return true;
 }
 

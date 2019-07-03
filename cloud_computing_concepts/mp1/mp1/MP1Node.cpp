@@ -258,10 +258,16 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
     MsgTypes::Types msgType = MessageDecoder::getTypeFromMsg(data, size);
     cerr << "Received msg type: " << MsgTypes::to_string(msgType) << " at Node: " << this->memberNode->addr.getAddress() << endl;
     shared_ptr<BaseMessage> msg = MessageDecoder::decode(data, size);
+    if(!msg) {
+#ifdef DEBUGLOG
+        cout << "Getting nullptr as decoded msg! Failed to decode message..." << endl;
+#endif
+        return false;
+    }
 #ifdef DEBUGLOG
     msg->printMsg();
 #endif
-    msg->onReceiveHandler(*this);
+    return msg->onReceiveHandler(*this);
 }
 
 /**

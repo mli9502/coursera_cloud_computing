@@ -349,14 +349,38 @@ public:
 	MembershipList() : EntryList(), lastPingIdx(0) {}
 	~MembershipList() = default;
 
-	bool insertEntry(const Address& addr) {
-		return insertEntry(MembershipListEntry(addr));
+	bool appendEntry(const Address& addr) {
+		return appendEntry(MembershipListEntry(addr));
 	}
 
-	// Insert membership list entry we received.
+	bool appendEntry(MembershipListEntry newEntry) {
+		cerr << "appending: " << newEntry << endl;
+		for(auto& entry : this->entryVec) {
+			if(newEntry.getAddress() == entry.getAddress()) {
+				cerr << "Entry is already presented in membership list: " << endl;
+				cerr << "Entry in list: " << entry << endl;
+				cerr << "Received entry: " << newEntry << endl;
+				if(isOverride(newEntry, entry)) {
+					entry.type = newEntry.type;
+					entry.incarnationNum = newEntry.incarnationNum;
+					return true;
+				}
+				return false;
+			}
+		}
+		entryVec.push_back(newEntry);
+	}
+
+	bool insertEntry(const Address& addr) {
+		return insertEntryAtRandom(MembershipListEntry(addr));
+	}
+
+	// TODO: @7/2/2019: May need to deprecate this method, since when we get top K, and and ping target, we will do random again,
+	// 					there's no point of random at insert time.
+	// Insert membership list entry we received at a random position in the list.
 	// If the address of the entry is already present in the list, we update the entry using override rules.
 	// If the address is new, this means that a new entry has joined. And we insert this new entry into a random location in the list.
-	bool insertEntry(MembershipListEntry newEntry) {
+	bool insertEntryAtRandom(MembershipListEntry newEntry) {
 		cerr << "inserting: " << newEntry << endl;
 		for(auto& entry : this->entryVec) {
 			if(newEntry.getAddress() == entry.getAddress()) {

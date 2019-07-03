@@ -22,30 +22,38 @@ shared_ptr<BaseMessage> MessageDecoder::decode(const vector<char>& msg) {
     switch(type) {
         case MsgTypes::Types::PING: {
 #ifdef DEBUGLOG
-            cout << "Receiving message of type PING!" << endl;
+            cout << "Receiving message of type: " << MsgTypes::to_string(type) << endl;
 #endif
             rtn.reset(new PingMessage());
             break;
         }
         case MsgTypes::Types::PING_REQ: {
 #ifdef DEBUGLOG
-            cout << "Receiving message of type PING_REQ!" << endl;
+            cout << "Receiving message of type: " << MsgTypes::to_string(type) << endl;
 #endif  
             rtn.reset(new PingReqMessage());
             break;
         }
         case MsgTypes::Types::ACK: {
 #ifdef DEBUGLOG
-            cout << "Receiving message of type ACK!" << endl;
+            cout << "Receiving message of type: " << MsgTypes::to_string(type) << endl;
 #endif
             rtn.reset(new AckMessage());
             break;            
         }
         case MsgTypes::Types::JOINREQ: {
 #ifdef DEBUGLOG
-            cout << "Receiving message of type JOINREQ!" << endl;
+            cout << "Receiving message of type: " << MsgTypes::to_string(type) << endl;
 #endif
             rtn.reset(new JoinReqMessage());
+            break;
+        }
+        case MsgTypes::Types::JOINRESP: {
+#ifdef DEBUGLOG
+            cout << "Receiving message of type: " << MsgTypes::to_string(type) << endl;
+#endif    
+            rtn.reset(new JoinRespMessage());
+            break;
         }
         default: {
 #ifdef DEBUGLOG

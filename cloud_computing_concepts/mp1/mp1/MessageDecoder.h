@@ -5,6 +5,7 @@
 #include "PingReqMessage.h"
 #include "AckMessage.h"
 #include "JoinReqMessage.h"
+#include "JoinRespMessage.h"
 
 /**
  * class used to decode the messages.

@@ -48,7 +48,6 @@ public:
     virtual void decode(const vector<char>& msg) = 0;
     virtual vector<char> encode() = 0;
     // This method implements what we should do when we receive a type of message.
-    // TODO: @7/2/2019: Add getters for private members in MP1Node.
     virtual bool onReceiveHandler(MP1Node& node) = 0;
     virtual void printMsg() = 0;
 
