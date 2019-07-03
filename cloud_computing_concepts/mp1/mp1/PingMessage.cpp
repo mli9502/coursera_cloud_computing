@@ -55,10 +55,10 @@ void PingMessage::printMsg() {
     cout << "########## ########## #########" << endl;
 }
 
-shared_ptr<BaseMessage> PingMessage::onReceiveHandler(MP1Node& node) {
+bool PingMessage::onReceiveHandler(MP1Node& node) {
     // TODO: fill this in.
 #ifdef DEBUGLOG
     cout << "In PingMessage::onReceiveHandler..." << endl;
 #endif
-    return shared_ptr<BaseMessage>();
+    return true;
 }

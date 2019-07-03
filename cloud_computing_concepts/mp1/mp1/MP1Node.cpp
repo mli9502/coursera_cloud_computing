@@ -261,7 +261,7 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
 #ifdef DEBUGLOG
     msg->printMsg();
 #endif
-    shared_ptr<BaseMessage> resp = msg->onReceiveHandler(*this);
+    msg->onReceiveHandler(*this);
 }
 
 /**
@@ -330,6 +330,10 @@ MembershipList& MP1Node::getMembershipList() {
 
 FailList& MP1Node::getFailList() {
     return this->failList;
+}
+
+EmulNet* MP1Node::getEmulNet() {
+    return this->emulNet;
 }
 
 // A msg id consists of id_addr and id_period_cnt.

@@ -33,12 +33,12 @@ void JoinRespMessage::decode(const vector<char>& msg) {
     decodePiggybackLists(msgPtr);
 }
 
-shared_ptr<BaseMessage> JoinRespMessage::onReceiveHandler(MP1Node& node) {
+bool JoinRespMessage::onReceiveHandler(MP1Node& node) {
     // TODO: Fill this in.
 #ifdef DEBUGLOG
     cout << "In JoinRespMessage::onReceiveHandler..." << endl;
 #endif
-    return shared_ptr<BaseMessage>();
+    return true;
 }
 
 void JoinRespMessage::printMsg() {

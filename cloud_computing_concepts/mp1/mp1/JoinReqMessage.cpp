@@ -34,7 +34,7 @@ void JoinReqMessage::decode(const vector<char>& msg) {
 // @state: The MP1Node that receives this message.
 // On receive, the membershipList and failList of node (which should be the coordinator), 
 // will be taken and insert into JoinResp message to send to the newly joined node.
-shared_ptr<BaseMessage> JoinReqMessage::onReceiveHandler(MP1Node& node) {
+bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
 #ifdef DEBUGLOG
     cout << "In JoinReqMessage::onReceiveHandler..." << endl;
 #endif
@@ -43,13 +43,13 @@ shared_ptr<BaseMessage> JoinReqMessage::onReceiveHandler(MP1Node& node) {
     // The destination in the decoded message is now source, and source is now destination.
     Address newSource = destination;
     Address newDestination = source;
-    shared_ptr<BaseMessage> rtn = make_shared<JoinRespMessage>(MsgTypes::Types::JOINRESP, 
-                                                                newSource, 
-                                                                newDestination, 
-                                                                node.getMembershipList().getFirstK(JoinRespMessage::MAX_LIST_ENTRY), 
-                                                                node.getFailList().getFirstK(JoinRespMessage::MAX_LIST_ENTRY));
+    shared_ptr<BaseMessage> respMsg = make_shared<JoinRespMessage>(MsgTypes::Types::JOINRESP, 
+                                                                    newSource, 
+                                                                    newDestination, 
+                                                                    node.getMembershipList().getFirstK(JoinRespMessage::MAX_LIST_ENTRY), 
+                                                                    node.getFailList().getFirstK(JoinRespMessage::MAX_LIST_ENTRY));
     // TODO: @7/2/2019: Need to send out this message using emulNet->send.
-    return rtn;
+    return true;
 }
 
 void JoinReqMessage::printMsg() {

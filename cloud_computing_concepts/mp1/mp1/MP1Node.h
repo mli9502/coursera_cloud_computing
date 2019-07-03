@@ -549,6 +549,7 @@ public:
 
 	MembershipList& getMembershipList();
 	FailList& getFailList();
+	EmulNet* getEmulNet();
 	
 	virtual ~MP1Node();
 
