@@ -369,6 +369,7 @@ public:
 			}
 		}
 		entryVec.push_back(newEntry);
+		return true;
 	}
 
 	bool insertEntry(const Address& addr) {

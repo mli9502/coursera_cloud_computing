@@ -136,6 +136,7 @@ int EmulNet::ENsend(Address *myaddr, Address *toaddr, char *data, int size) {
  * RETURNS:
  * size
  */
+// @mli: When we send, we append the msg at the end of the queue.
 int EmulNet::ENsend(Address *myaddr, Address *toaddr, string data) {
 	char * str = (char *) malloc(data.length() * sizeof(char));
 	memcpy(str, data.c_str(), data.size());
@@ -152,6 +153,7 @@ int EmulNet::ENsend(Address *myaddr, Address *toaddr, string data) {
  * RETURN:
  * 0
  */
+// @mli: When we receive, we start from the end of the queue to receive msg.
 int EmulNet::ENrecv(Address *myaddr, int (* enq)(void *, char *, int), struct timeval *t, int times, void *queue){
 	// times is always assumed to be 1
 	int i;

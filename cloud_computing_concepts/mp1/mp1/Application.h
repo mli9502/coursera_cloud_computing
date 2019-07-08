@@ -25,6 +25,7 @@ extern int nodeCount;
  */
 #define ARGS_COUNT 2
 // #define TOTAL_RUNNING_TIME 700
+// TODO: @7/7/2019: need to change this back to 700.
 #define TOTAL_RUNNING_TIME 15
 
 /**

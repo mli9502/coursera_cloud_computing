@@ -36,7 +36,7 @@ void JoinReqMessage::decode(const vector<char>& msg) {
 // will be taken and insert into JoinResp message to send to the newly joined node.
 bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
 #ifdef DEBUGLOG
-    cout << "In JoinReqMessage::onReceiveHandler..." << endl;
+    cout << "In JoinReqMessage::onReceiveHandler at Node: " << destination.getAddress() << endl;
 #endif
     node.getMembershipList().appendEntry(source);
     // Construct a JoinResp message.

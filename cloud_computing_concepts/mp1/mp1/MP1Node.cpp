@@ -59,6 +59,11 @@ MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Addres
 	this->log = log;
 	this->par = params;
 	this->memberNode->addr = *address;
+    // Insert the current node into membership list.
+#ifdef DEBUGLOG
+    cout << "Adding " << memberNode->addr.getAddress() << " to the membershipList of itself." << endl;
+#endif
+    this->membershipList.appendEntry(memberNode->addr);
 }
 
 /**
