@@ -459,6 +459,18 @@ public:
 	FailList() : EntryList() {}
 	~FailList() = default;
 
+	bool insertEntry(FailListEntry newEntry) {
+		for(auto& entry : entryVec) {
+			if(newEntry.getAddress() == entry.getAddress()) {
+				cerr << "Entry is already marked as failed..." << endl;
+				cerr << entry << endl;
+				return false;
+			}
+		}
+		entryVec.push_back(newEntry);
+		entryVec.back().piggybackCnt = 0;
+	}
+
 	bool insertEntry(MembershipListEntry newEntry) {
 		for(auto& entry : entryVec) {
 			if(newEntry.getAddress() == entry.getAddress()) {
@@ -536,10 +548,14 @@ private:
 	FailList failList;
 	// list of members that recently failed.
 	MembershipList membershipList;
-	// Count for protocol period.
+	// Count for protocol period indicating how many period we have passed by.
 	// This count is needed to form the ID for a message.
 	// The ID is IP:PORT:PERIOD_CNT
 	unsigned long protocolPeriodCnt;
+	// Counter indicating whether we have reached PROTOCOL_PERIOD.
+	// Will be reset to 0 once reach PROTOCOL_PERIOD.
+	// Will be incremented every recvLoop.
+	unsigned protocolPeriodLocalCounter;
 	// pingMap, pingReqMap and pingReqPingMap stores the outstanding msgs that we sent out.
 	// key: ID, val: msg we sent
 	// ID = src_ip|dest_ip|protocol_period_cnt
@@ -571,6 +587,14 @@ public:
 	Address getJoinAddress();
 	void initMemberListTable(Member *memberNode);
 	void printAddress(Address *addr);
+
+	void updatePeriod() {
+		protocolPeriodLocalCounter ++;
+		if(protocolPeriodLocalCounter == PROTOCOL_PERIOD) {
+			protocolPeriodLocalCounter = 0;
+			protocolPeriodCnt ++;
+		}
+	}
 
 	MembershipList& getMembershipList();
 	FailList& getFailList();

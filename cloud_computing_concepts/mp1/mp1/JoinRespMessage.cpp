@@ -35,9 +35,23 @@ void JoinRespMessage::decode(const vector<char>& msg) {
 
 bool JoinRespMessage::onReceiveHandler(MP1Node& node) {
     // TODO: Fill this in.
+    // @mli: 
+    // What do we do when receiving the JoinResp message?
+    // - Add all the MembershipListNode and FailListNode that were received to MembershipList and FailList.
+    // - Start sending Ping msg to random nodes selected from MembershipList. 
+    // - Need to start tracking protocal period.
 #ifdef DEBUGLOG
     cout << "In JoinRespMessage::onReceiveHandler..." << endl;
 #endif
+    // Insert all the MembershipListNode and FailListNode.
+    for(auto& entry : piggybackMembershipList) {
+        node.getMembershipList().appendEntry(entry);
+    }
+    for(auto& entry : piggybackFailList) {
+        node.getFailList().insertEntry(entry);
+    }
+    // Select random nodes to send Ping msg.
+    
     return true;
 }
 

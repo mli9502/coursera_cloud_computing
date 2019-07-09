@@ -287,7 +287,7 @@ void MP1Node::nodeLoopOps() {
 	/*
 	 * Your code goes here
 	 */
-
+    this->updatePeriod();
     return;
 }
 
