@@ -521,6 +521,7 @@ private:
 	Member *memberNode;
 	char NULLADDR[6];
 
+public:
 	// Ping timeout.
 	// PING_TIMEOUT = RTT = 2 for now.
 	static const long PING_TIMEOUT;
@@ -538,7 +539,7 @@ private:
 
 	// Number of targets we select each time for sending PING_REQ message.
 	static const int NUM_PING_REQ_TARGETS;
-
+private:
 	// Incarnation number.
 	// Initialized to 0 when node joined. Incremented when it receives a SUSPECT of itself.
 	// When a SUSPECT msg on the node itself comes, insert this node into membership list with piggybackCnt 0, type ALIVE and the updated incarnation number.
@@ -565,8 +566,6 @@ private:
 	TimeoutMap<string, string> pingReqMap;
 	// pingReqPingMap: The ping msgs we send out after we receives a ping_req msg. 
 	TimeoutMap<string, string> pingReqPingMap;
-	// list of members that are currently alive.
-	int getMaxPiggybackCnt();
 
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
@@ -630,6 +629,12 @@ public:
 
 	static string getId(Address idAddr, unsigned long idPeriodCnt) {
 		return idAddr.getAddress() + ":" + to_string(idPeriodCnt);
+	}
+
+	// list of members that are currently alive.
+	int getMaxPiggybackCnt();
+	unsigned long getProtocolPeriod() const {
+		return this->protocolPeriodCnt;
 	}
 };
 

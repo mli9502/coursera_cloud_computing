@@ -42,15 +42,15 @@ bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
     // Construct a JoinResp message.
     // The destination in the decoded message is now source, and source is now destination.
     Address newSource = destination;
-    Address newDestination = source;
+    Address newTarget = source;
     shared_ptr<BaseMessage> respMsg = make_shared<JoinRespMessage>(MsgTypes::Types::JOINRESP, 
                                                                     newSource, 
-                                                                    newDestination, 
+                                                                    newTarget, 
                                                                     node.getMembershipList().getFirstK(JoinRespMessage::MAX_LIST_ENTRY), 
                                                                     node.getFailList().getFirstK(JoinRespMessage::MAX_LIST_ENTRY));
     
     vector<char> encodedResp = respMsg->encode();
-    int sizeSent = node.getEmulNet()->ENsend(&newSource, &newDestination, encodedResp.data(), encodedResp.size());
+    int sizeSent = node.getEmulNet()->ENsend(&newSource, &newTarget, encodedResp.data(), encodedResp.size());
     if(sizeSent == 0) {
 #ifdef DEBUGLOG
         cout << "sizeSent is 0, msg is not sent..." << endl;
