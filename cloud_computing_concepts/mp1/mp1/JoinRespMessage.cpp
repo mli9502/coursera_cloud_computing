@@ -37,7 +37,7 @@ void JoinRespMessage::decode(const vector<char>& msg) {
 
 bool JoinRespMessage::onReceiveHandler(MP1Node& node) {
 #ifdef DEBUGLOG
-    cout << "In JoinRespMessage::onReceiveHandler..." << endl;
+    cout << "In JoinRespMessage::onReceiveHandler at node: " << node.getMemberNode()->addr.getAddress() << endl;
 #endif
 
     // Insert all the MembershipListNode and FailListNode.
