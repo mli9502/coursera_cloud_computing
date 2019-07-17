@@ -9,4 +9,9 @@ TODO:
 
 7/16/2019:
 - [x] When selecting Ping target, we need to exclude the current Node.
-- [ ] Need to go through the log. Preferably decrease the number of nodes first...
+- [x] Need to go through the log. Preferably decrease the number of nodes first...
+
+7/17/2019:
+- [ ] Send PingResp msg when receiving a PingMsg.
+- [ ] Start sending PingMsg on the start of a protocol period.
+- [ ] Need to reset the protocolPeriod and protocolPeriodCounter when receiving JoinResp msg.
