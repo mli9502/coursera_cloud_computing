@@ -51,34 +51,46 @@ bool JoinRespMessage::onReceiveHandler(MP1Node& node) {
     // From the membership list, select K nodes to send Ping.
     // NOTE: Note that when constructing Ping msg, we don't actually need the message that triggers this.
     //       We only need to have the source node.
+    Address newSource = node.getMemberNode()->addr;
+    
     vector<MembershipListEntry> respPiggybackMembershipListEntries = node.getMembershipList().getTopK(node.K, node.getMaxPiggybackCnt());
     vector<FailListEntry> respPiggybackFailListEntries = node.getFailList().getTopK(node.K, node.getMaxPiggybackCnt());
-    Address newSource = node.getMemberNode()->addr;
-    unsigned long currProtocolPeriod = node.getProtocolPeriod(); 
-    vector<MembershipListEntry> pingTargets = node.getMembershipList().getTopK(node.NUM_PING_REQ_TARGETS, INT_MAX);
-    for(const auto& target : pingTargets) {
-        Address newTarget = target.addr;
+
+    unsigned long currProtocolPeriod = node.getProtocolPeriod();
+
+    // Select a pingTarget from membershipList to send Ping msg.
+    MembershipListEntry pingTarget;
+    bool rc = node.getMembershipList().getPingTarget(pingTarget, node.getMemberNode()->addr);
+    if(!rc) {
 #ifdef DEBUGLOG
-        cout << "Sending Ping message to " << newTarget.getAddress() << "..." << endl;
+        cout << "getPingTarget failed at node: " << newSource.getAddress() << " ..." << endl;
 #endif
-        shared_ptr<BaseMessage> pingMsg = make_shared<PingMessage>(MsgTypes::Types::PING,
-                                                                    newSource,
-                                                                    newTarget,
-                                                                    currProtocolPeriod,
-                                                                    respPiggybackMembershipListEntries,
-                                                                    respPiggybackFailListEntries);
-        vector<char> encodedPing = pingMsg->encode();
-        int sizeSent = node.getEmulNet()->ENsend(&newSource, &newTarget, encodedPing.data(), encodedPing.size());
-        if(sizeSent == 0) {
-    #ifdef DEBUGLOG
-            cout << "sizeSent is 0, msg is not sent..." << endl;
-    #endif
-        } else {
-    #ifdef DEBUGLOG
-            cout << "sizeSent is " << sizeSent << endl;
-    #endif
-        }
+        return false;
     }
+#ifdef DEBUGLOG
+        cout << "Selected Ping target: " << pingTarget.getAddress() << " at Node: " << newSource.getAddress() << endl;
+        cout << "Sending Ping msg to: " << pingTarget.getAddress() << endl;
+#endif
+
+    shared_ptr<BaseMessage> pingMsg = make_shared<PingMessage>(MsgTypes::Types::PING,
+                                                                newSource,
+                                                                pingTarget.addr,
+                                                                currProtocolPeriod,
+                                                                respPiggybackMembershipListEntries,
+                                                                respPiggybackFailListEntries);
+
+    vector<char> encodedPing = pingMsg->encode();
+    int sizeSent = node.getEmulNet()->ENsend(&newSource, &(pingTarget.addr), encodedPing.data(), encodedPing.size());
+    if(sizeSent == 0) {
+#ifdef DEBUGLOG
+        cout << "sizeSent is 0, msg is not sent..." << endl;
+#endif
+    } else {
+#ifdef DEBUGLOG
+        cout << "sizeSent is " << sizeSent << endl;
+#endif
+    }
+
     return true;
 }
 

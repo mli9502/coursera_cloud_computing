@@ -90,6 +90,7 @@ public:
 	Address addr;
 	int piggybackCnt;
 
+	Entry() : entryMsg(nullptr), piggybackCnt(0) {}
 	Entry(Address addr) : entryMsg(nullptr), addr(addr), piggybackCnt(0) {}
 	virtual ~Entry() {
 		if(entryMsg) {
@@ -126,6 +127,7 @@ public:
 	// This is the incarnationNum that is received from other nodes.
 	long incarnationNum;
 
+	MembershipListEntry() : Entry(), type(MemberTypes::ALIVE), incarnationNum(0) {}
 	MembershipListEntry(Address addr) : Entry(addr), type(MemberTypes::ALIVE), incarnationNum(0) {}
 	MembershipListEntry(Address addr, MemberTypes type, long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum) {}	
 	~MembershipListEntry() = default;
@@ -418,6 +420,7 @@ public:
 			cerr << "Membership list is currently empty!" << endl;
 			return false;
 		}
+		// Note that in the current implementation, the very first Ping iteration will not shuffle the list.
 		if(lastPingIdx == entryVec.size()) {
 			if(EntryList<MembershipListEntry>::SEED != 0) {
 				std::shuffle(entryVec.begin(), entryVec.end(), std::mt19937{EntryList<MembershipListEntry>::SEED});
@@ -469,6 +472,7 @@ public:
 		}
 		entryVec.push_back(newEntry);
 		entryVec.back().piggybackCnt = 0;
+		return true;
 	}
 
 	bool insertEntry(MembershipListEntry newEntry) {

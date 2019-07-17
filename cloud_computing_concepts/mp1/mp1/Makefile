@@ -36,7 +36,7 @@ main: $(OBJ_FILES) $(MAIN_OBJ)
 	$(CXX) -o $@ $^ $(LD_FLAGS)
 
 run_singlefailure: main
-	./main ./testcases/singlefailure.conf
+	./main ./testcases/singlefailure_mli.conf
 
 all_tests: $(OBJ_FILES)
 	$(MAKE) -C $(TEST_DIR) all_tests HEADER_DIR=$(abspath $(HEADER_DIR)) SRC_OBJ_DIR=$(abspath $(OBJ_DIR))

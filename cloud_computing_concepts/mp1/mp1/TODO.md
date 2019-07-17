@@ -8,5 +8,5 @@ TODO:
 - [x] Add handle of `JoinResp` message.
 
 7/16/2019:
-- [ ] When selecting Ping target, we need to exclude the current Node.
+- [x] When selecting Ping target, we need to exclude the current Node.
 - [ ] Need to go through the log. Preferably decrease the number of nodes first...
