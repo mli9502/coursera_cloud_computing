@@ -12,6 +12,11 @@ TODO:
 - [x] Need to go through the log. Preferably decrease the number of nodes first...
 
 7/17/2019:
-- [ ] Send PingResp msg when receiving a PingMsg.
+- [x] Send Ack msg when receiving a PingMsg.
 - [ ] Start sending PingMsg on the start of a protocol period.
 - [ ] Need to reset the protocolPeriod and protocolPeriodCounter when receiving JoinResp msg.
+
+7/18/2019
+- [ ] Need to read the paper again to understand the following cases:
+    - Node is in the received membershipList, and also in curr node's failList.
+    - Node is in the received failList, and also in curr node's membershipList.

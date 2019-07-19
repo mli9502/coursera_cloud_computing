@@ -125,11 +125,11 @@ public:
 	MemberTypes type;
 	// NOTE: This incarnationNum is not the same as the member in MP1Node. 
 	// This is the incarnationNum that is received from other nodes.
-	long incarnationNum;
+	unsigned long incarnationNum;
 
 	MembershipListEntry() : Entry(), type(MemberTypes::ALIVE), incarnationNum(0) {}
 	MembershipListEntry(Address addr) : Entry(addr), type(MemberTypes::ALIVE), incarnationNum(0) {}
-	MembershipListEntry(Address addr, MemberTypes type, long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum) {}	
+	MembershipListEntry(Address addr, MemberTypes type, unsigned long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum) {}	
 	~MembershipListEntry() = default;
 
 	// Get the size of this entry in a message.
@@ -154,7 +154,7 @@ public:
 	static MembershipListEntry decodeEntryMsg(char const*& msgPtr) {
 		Address addr;
 		MemberTypes type;
-		long incarnationNum = 0;
+		unsigned long incarnationNum = 0;
 		copyObj(msgPtr, addr);
 		copyObj(msgPtr, type);
 		copyObj(msgPtr, incarnationNum);
@@ -374,7 +374,7 @@ public:
 		return true;
 	}
 
-	bool insertEntry(const Address& addr) {
+	bool insertEntryAtRandom(const Address& addr) {
 		return insertEntryAtRandom(MembershipListEntry(addr));
 	}
 
@@ -548,7 +548,7 @@ private:
 	// Initialized to 0 when node joined. Incremented when it receives a SUSPECT of itself.
 	// When a SUSPECT msg on the node itself comes, insert this node into membership list with piggybackCnt 0, type ALIVE and the updated incarnation number.
 	// By doing this, the ALIVE information is send to other nodes. 
-	long incarnationNum;
+	unsigned long incarnationNum;
 	// list of members that have been failed recently.
 	FailList failList;
 	// list of members that recently failed.
@@ -640,6 +640,9 @@ public:
 	unsigned long getProtocolPeriod() const {
 		return this->protocolPeriodCnt;
 	}
+	unsigned long getIncarnationNum() const {
+		return this->incarnationNum;
+	}						
 };
 
 class MsgHelper {
