@@ -45,8 +45,15 @@ vector<char> AckMessage::encode() {
 bool AckMessage::onReceiveHandler(MP1Node& node) {
     // TODO: Fill this in.
 #ifdef DEBUGLOG
-    cout << "In AckMessage::onReceiveHandler..." << endl;
+    cout << "In AckMessage::onReceiveHandler at node: " << node.getMemberNode()->addr.getAddress() << endl;
 #endif
+    node.getPingMap().print();
+    // First check if id is in pingMap.
+    if(node.getPingMap().contains(getId())) {
+#ifdef DEBUGLOG
+        cout << "Found id: " << getId() << " in pingMap for node: " << node.getMemberNode()->addr.getAddress() << endl;
+#endif
+    }
     return true;
 }
 

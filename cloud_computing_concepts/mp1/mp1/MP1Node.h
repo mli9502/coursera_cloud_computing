@@ -561,15 +561,26 @@ private:
 	// Will be reset to 0 once reach PROTOCOL_PERIOD.
 	// Will be incremented every recvLoop.
 	unsigned protocolPeriodLocalCounter;
+	bool ackReceived;
 	// pingMap, pingReqMap and pingReqPingMap stores the outstanding msgs that we sent out.
 	// key: ID, val: msg we sent
 	// ID = src_ip|dest_ip|protocol_period_cnt
 	// pingMap: The initial ping message we send every protocol period. 
+	// When we send a ping msg, the id will be recorded in this map.
+	// When we receive an Ack msg, we need to remove the corresponding entry from the map.
+	// Since we only send one Ping at each protocol period, this map should be empty if we receive a direct Ack from target.
 	TimeoutMap<string, string> pingMap;
 	// pingReqMap: The ping_req msgs we send out after the initial ping request times out.
+	// NOTE: there might be multiple PingReq msg that we could send at each protocol period.
+	// As a result, every time we receive an Ack message, do the following:
+	// - First check if sourceId == currPingId. If yes, remove the entry from pingMap. mark ackReceived to true.
+	// - Then, check if sourceId is in pingReqMap. If yes, remove the entry from pingMap, mark ackReceived to true.
+	// - Then, check if sourceId is in pingReqPingMap. If yes, redirect the Ack msg by sending an Ack to the node that sends the PingReq.
 	TimeoutMap<string, string> pingReqMap;
 	// pingReqPingMap: The ping msgs we send out after we receives a ping_req msg. 
 	TimeoutMap<string, string> pingReqPingMap;
+
+	bool sendPingMsg();
 
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
@@ -642,6 +653,10 @@ public:
 	}
 	unsigned long getIncarnationNum() const {
 		return this->incarnationNum;
+	}
+
+	TimeoutMap<string, string>& getPingMap() {
+		return this->pingMap;
 	}						
 };
 

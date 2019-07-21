@@ -69,7 +69,9 @@ bool PingMessage::onReceiveHandler(MP1Node& node) {
     // Two cases need to be considered here:
     // - Node is in the received membershipList, and also in curr node's failList.
     // - Node is in the received failList, and also in curr node's membershipList.
-    
+    // TODO: When we send ACK message back, we need to decode the ID from the source msg.
+    //          And use the protocolPeriodCnt from the source msg to construct the ID of the ACK msg.
+    //          By doing this, we can make sure that this ID matches at the source side.
     for(auto& entry : piggybackMembershipList) {
         node.getMembershipList().insertEntryAtRandom(entry);
     }

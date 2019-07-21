@@ -283,12 +283,61 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
  * 				Propagate your membership list
  */
 void MP1Node::nodeLoopOps() {
-
-	/*
-	 * Your code goes here
-	 */
     this->updatePeriod();
+    // TODO: @7/20/2019: When receive JoinResp message, we probably don't need to send out Ack message.
+    //                   We can wait until the start of the next protocolPeriod.
+
+    // If this is the start of a protocolPeriod, start sending Ping message.
+    if(this->protocolPeriodLocalCounter == 0) {
+        this->sendPingMsg();
+    }
+    // If this is the end of a protocolPeriod, check to see if Ack message has been received.
     return;
+}
+
+bool MP1Node::sendPingMsg() {
+    Address source = getMemberNode()->addr;
+
+    vector<MembershipListEntry> respPiggybackMembershipListEntries = getMembershipList().getTopK(K, getMaxPiggybackCnt());
+    vector<FailListEntry> respPiggybackFailListEntries = getFailList().getTopK(K, getMaxPiggybackCnt());
+
+    unsigned long currProtocolPeriod = getProtocolPeriod();
+
+    // Select a pingTarget from membershipList to send Ping msg.
+    MembershipListEntry pingTarget;
+    bool rc = getMembershipList().getPingTarget(pingTarget, source);
+    if(!rc) {
+#ifdef DEBUGLOG
+        cout << "getPingTarget failed at node: " << source.getAddress() << " ..." << endl;
+#endif
+        return false;
+    }
+#ifdef DEBUGLOG
+        cout << "Selected Ping target: " << pingTarget.getAddress() << " at Node: " << source.getAddress() << endl;
+        cout << "Sending Ping msg to: " << pingTarget.getAddress() << endl;
+#endif
+
+    shared_ptr<BaseMessage> pingMsg = make_shared<PingMessage>(MsgTypes::Types::PING,
+                                                                source,
+                                                                pingTarget.addr,
+                                                                currProtocolPeriod,
+                                                                respPiggybackMembershipListEntries,
+                                                                respPiggybackFailListEntries);
+
+    vector<char> encodedPing = pingMsg->encode();
+    int sizeSent = getEmulNet()->ENsend(&source, &(pingTarget.addr), encodedPing.data(), encodedPing.size());
+    if(sizeSent == 0) {
+#ifdef DEBUGLOG
+        cout << "sizeSent is 0, msg is not sent... NOTE that in this case, the pingMap will also be empty!" << endl;
+        return false;
+#endif
+    } else {
+#ifdef DEBUGLOG
+        cout << "sizeSent is " << sizeSent << ", id: " << pingMsg->getId() << endl;
+        // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
+        this->pingMap.insert(pingMsg->getId(), std::string(encodedPing.begin(), encodedPing.end()));
+#endif
+    }
 }
 
 /**
