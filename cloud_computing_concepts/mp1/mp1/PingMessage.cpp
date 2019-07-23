@@ -88,7 +88,7 @@ bool PingMessage::onReceiveHandler(MP1Node& node) {
     shared_ptr<BaseMessage> ackMsg = make_shared<AckMessage>(MsgTypes::ACK,
                                                             newSource,
                                                             newDestination,
-                                                            node.getProtocolPeriod(),
+                                                            this->protocol_period, // Note that in here, we take the protocolPeriod from the Ping msg we received.
                                                             node.getIncarnationNum(),
                                                             respPiggybackMembershipListEntries,
                                                             respPiggybackFailListEntries);

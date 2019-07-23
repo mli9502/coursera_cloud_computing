@@ -561,6 +561,7 @@ private:
 	// Will be reset to 0 once reach PROTOCOL_PERIOD.
 	// Will be incremented every recvLoop.
 	unsigned protocolPeriodLocalCounter;
+	// TODO: In constructor, need to set this to false.
 	bool ackReceived;
 	// pingMap, pingReqMap and pingReqPingMap stores the outstanding msgs that we sent out.
 	// key: ID, val: msg we sent
@@ -581,6 +582,7 @@ private:
 	TimeoutMap<string, string> pingReqPingMap;
 
 	bool sendPingMsg();
+	bool sendPingReqMsg();
 
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
@@ -657,7 +659,17 @@ public:
 
 	TimeoutMap<string, string>& getPingMap() {
 		return this->pingMap;
-	}						
+	}	
+	TimeoutMap<string, string>& getPingReqMap() {
+		return this->pingReqMap;
+	}
+	TimeoutMap<string, string>& getPingReqPingMap() {
+		return this->pingReqPingMap;
+	}
+
+	void setAckReceived() {
+		this->ackReceived = true;
+	}					
 };
 
 class MsgHelper {

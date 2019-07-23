@@ -43,17 +43,34 @@ vector<char> AckMessage::encode() {
 }
 
 bool AckMessage::onReceiveHandler(MP1Node& node) {
-    // TODO: Fill this in.
+    auto nodeAddr = node.getMemberNode()->addr.getAddress();
 #ifdef DEBUGLOG
-    cout << "In AckMessage::onReceiveHandler at node: " << node.getMemberNode()->addr.getAddress() << endl;
-#endif
+    cout << "In AckMessage::onReceiveHandler at node: " << nodeAddr << endl;
+    cout << "Received Ack msg id: " << getId() << " from Node: " << this->source.getAddress() << " at Node: " << nodeAddr << endl;
+    cout << "PingMap at Node: " << nodeAddr << " is: " << endl;
     node.getPingMap().print();
+    cout << "PingReqMap at Node: " << nodeAddr << " is: " << endl;
+    node.getPingReqMap().print();
+    cout << "PingReqPingMap at Node: " << nodeAddr << " is: " << endl;
+    node.getPingReqPingMap().print();
+#endif
     // First check if id is in pingMap.
     if(node.getPingMap().contains(getId())) {
 #ifdef DEBUGLOG
-        cout << "Found id: " << getId() << " in pingMap for node: " << node.getMemberNode()->addr.getAddress() << endl;
+        cout << "Found id: " << getId() << " in pingMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
 #endif
+        node.getPingMap().erase(getId());
+        node.setAckReceived();
+    } else if(node.getPingReqMap().contains(getId())) {
+#ifdef DEBUGLOG
+        cout << "Found id: " << getId() << " in pingReqMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
+#endif
+        node.getPingReqMap().erase(getId());
+        node.setAckReceived();
+    } else if(node.getPingReqPingMap().contains(getId())) {
+        // TODO: Need to route Ack message to the source.
     }
+
     return true;
 }
 

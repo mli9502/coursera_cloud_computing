@@ -289,7 +289,10 @@ void MP1Node::nodeLoopOps() {
 
     // If this is the start of a protocolPeriod, start sending Ping message.
     if(this->protocolPeriodLocalCounter == 0) {
+        // TODO: In here, we need to clear the entries with last protocolPeriod out of the TimeoutMap.
         this->sendPingMsg();
+    } else if(this->protocolPeriodLocalCounter == PING_TIMEOUT) {
+        this->sendPingReqMsg();
     }
     // If this is the end of a protocolPeriod, check to see if Ack message has been received.
     return;
@@ -338,6 +341,10 @@ bool MP1Node::sendPingMsg() {
         this->pingMap.insert(pingMsg->getId(), std::string(encodedPing.begin(), encodedPing.end()));
 #endif
     }
+}
+
+bool MP1Node::sendPingReqMsg() {
+    // TODO: Fill in this.
 }
 
 /**
