@@ -42,7 +42,7 @@ public:
 		memcpy(&addr[0], &id, sizeof(int));
 		memcpy(&addr[4], &port, sizeof(short));
 	}
-	string getAddress() {
+	string getAddress() const {
 		int id = 0;
 		short port;
 		memcpy(&id, &addr[0], sizeof(int));

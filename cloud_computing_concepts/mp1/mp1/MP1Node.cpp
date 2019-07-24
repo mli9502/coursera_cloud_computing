@@ -301,13 +301,13 @@ void MP1Node::nodeLoopOps() {
 bool MP1Node::sendPingMsg() {
     Address source = getMemberNode()->addr;
 
-    vector<MembershipListEntry> respPiggybackMembershipListEntries = getMembershipList().getTopK(K, getMaxPiggybackCnt());
-    vector<FailListEntry> respPiggybackFailListEntries = getFailList().getTopK(K, getMaxPiggybackCnt());
+    vector<MembershipListEntry> piggybackMembershipListEntries = getMembershipList().getTopK(K, getMaxPiggybackCnt());
+    vector<FailListEntry> piggybackFailListEntries = getFailList().getTopK(K, getMaxPiggybackCnt());
 
     unsigned long currProtocolPeriod = getProtocolPeriod();
 
-    // Select a pingTarget from membershipList to send Ping msg.
     MembershipListEntry pingTarget;
+    // Select a pingTarget from membershipList to send Ping msg.
     bool rc = getMembershipList().getPingTarget(pingTarget, source);
     if(!rc) {
 #ifdef DEBUGLOG
@@ -315,6 +315,7 @@ bool MP1Node::sendPingMsg() {
 #endif
         return false;
     }
+    this->currPingTarget = pingTarget.addr;
 #ifdef DEBUGLOG
         cout << "Selected Ping target: " << pingTarget.getAddress() << " at Node: " << source.getAddress() << endl;
         cout << "Sending Ping msg to: " << pingTarget.getAddress() << endl;
@@ -324,8 +325,8 @@ bool MP1Node::sendPingMsg() {
                                                                 source,
                                                                 pingTarget.addr,
                                                                 currProtocolPeriod,
-                                                                respPiggybackMembershipListEntries,
-                                                                respPiggybackFailListEntries);
+                                                                piggybackMembershipListEntries,
+                                                                piggybackFailListEntries);
 
     vector<char> encodedPing = pingMsg->encode();
     int sizeSent = getEmulNet()->ENsend(&source, &(pingTarget.addr), encodedPing.data(), encodedPing.size());
@@ -344,7 +345,53 @@ bool MP1Node::sendPingMsg() {
 }
 
 bool MP1Node::sendPingReqMsg() {
-    // TODO: Fill in this.
+    Address source = getMemberNode()->addr;
+
+    vector<MembershipListEntry> piggybackMembershipListEntries = getMembershipList().getTopK(K, getMaxPiggybackCnt());
+    vector<FailListEntry> piggybackFailListEntries = getFailList().getTopK(K, getMaxPiggybackCnt());
+
+    unsigned long currProtocolPeriod = getProtocolPeriod();
+
+    // Select K targets to send PingReq message.
+    vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source);    
+#ifdef DEBUGLOG
+    cout << "PingReq targets selected: " << endl;
+    for(const auto& pingReqTarget : pingReqTargets) {
+        cout << pingReqTarget.getAddress() << " at Node: " << source.getAddress() << endl;
+    }
+#endif
+    for(const auto& pingReqTarget : pingReqTargets) {
+        // Build PingReqMsg.
+        shared_ptr<BaseMessage> pingReqMsg = make_shared<PingReqMessage>(MsgTypes::Types::PING_REQ,
+                                                                            source,
+                                                                            pingReqTarget.addr,
+                                                                            this->currPingTarget,
+                                                                            this->protocolPeriodCnt,
+                                                                            piggybackMembershipListEntries,
+                                                                            piggybackFailListEntries);
+    }
+    // TODO: Continue here...
+//     shared_ptr<BaseMessage> pingMsg = make_shared<PingMessage>(MsgTypes::Types::PING,
+//                                                                 source,
+//                                                                 pingTarget.addr,
+//                                                                 currProtocolPeriod,
+//                                                                 respPiggybackMembershipListEntries,
+//                                                                 respPiggybackFailListEntries);
+
+//     vector<char> encodedPing = pingMsg->encode();
+//     int sizeSent = getEmulNet()->ENsend(&source, &(pingTarget.addr), encodedPing.data(), encodedPing.size());
+//     if(sizeSent == 0) {
+// #ifdef DEBUGLOG
+//         cout << "sizeSent is 0, msg is not sent... NOTE that in this case, the pingMap will also be empty!" << endl;
+//         return false;
+// #endif
+//     } else {
+// #ifdef DEBUGLOG
+//         cout << "sizeSent is " << sizeSent << ", id: " << pingMsg->getId() << endl;
+//         // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
+//         this->pingMap.insert(pingMsg->getId(), std::string(encodedPing.begin(), encodedPing.end()));
+// #endif
+//     }
 }
 
 /**

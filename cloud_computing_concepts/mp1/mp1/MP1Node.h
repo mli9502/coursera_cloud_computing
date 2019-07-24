@@ -102,7 +102,7 @@ public:
 		return piggybackCnt < rhs.piggybackCnt;
 	}
 
-	string getAddress() {
+	string getAddress() const {
 		return addr.getAddress();
 	}
 
@@ -414,6 +414,29 @@ public:
 		return true;
 	}
 
+	/**
+	 * Get random K entries from the list. 
+	 * This is used to select targets to send PingReq message.
+	 */
+	vector<MembershipListEntry> getRandomK(unsigned K, const Address& selfAddr, const Address& pingTargetAddr) {
+		vector<MembershipListEntry> rtn;
+		vector<pair<MembershipListEntry, int>> tmpVec;
+		for(unsigned i = 0; i < entryVec.size(); i ++) {
+			tmpVec.push_back({entryVec[i], i});
+		}
+		this->reorderVec(tmpVec);
+		auto it = tmpVec.begin();
+		while(rtn.size() < K && it != tmpVec.end()) {
+			// Skip node itself and the pingTarget that we already send PingMsg to.
+			if(it->first.addr == selfAddr || it->first.addr == pingTargetAddr) {
+				continue;
+			}
+			rtn.push_back(it->first);
+			it ++;
+		}
+		return rtn;
+	}
+
 	// Get the ping target and advance lastPingEntryIdx.
 	bool getPingTarget(MembershipListEntry& rtn, const Address& selfAddr) {
 		if(entryVec.empty()) {
@@ -561,6 +584,7 @@ private:
 	// Will be reset to 0 once reach PROTOCOL_PERIOD.
 	// Will be incremented every recvLoop.
 	unsigned protocolPeriodLocalCounter;
+	Address currPingTarget;
 	// TODO: In constructor, need to set this to false.
 	bool ackReceived;
 	// pingMap, pingReqMap and pingReqPingMap stores the outstanding msgs that we sent out.
