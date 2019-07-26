@@ -289,10 +289,16 @@ void MP1Node::nodeLoopOps() {
 
     // If this is the start of a protocolPeriod, start sending Ping message.
     if(this->protocolPeriodLocalCounter == 0) {
-        // TODO: In here, we need to clear the entries with last protocolPeriod out of the TimeoutMap.
+        // TODO: In here, we need to clear the entries with previous protocolPeriod out of the TimeoutMap.
         this->sendPingMsg();
     } else if(this->protocolPeriodLocalCounter == PING_TIMEOUT) {
         this->sendPingReqMsg();
+    } else if(this->protocolPeriodLocalCounter == PROTOCOL_PERIOD - 1) {
+        // If the ack is not received, need to either mark this node as suspeced, or mark it as failed.
+        if(!this->ackReceived) {
+
+        }
+        // TODO: In here, we check if we have received an ack msg.
     }
     // If this is the end of a protocolPeriod, check to see if Ack message has been received.
     return;
@@ -353,14 +359,14 @@ bool MP1Node::sendPingReqMsg() {
     unsigned long currProtocolPeriod = getProtocolPeriod();
 
     // Select K targets to send PingReq message.
-    vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source);    
+    vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source, this->currPingTarget);    
 #ifdef DEBUGLOG
     cout << "PingReq targets selected: " << endl;
     for(const auto& pingReqTarget : pingReqTargets) {
         cout << pingReqTarget.getAddress() << " at Node: " << source.getAddress() << endl;
     }
 #endif
-    for(const auto& pingReqTarget : pingReqTargets) {
+    for(auto& pingReqTarget : pingReqTargets) {
         // Build PingReqMsg.
         shared_ptr<BaseMessage> pingReqMsg = make_shared<PingReqMessage>(MsgTypes::Types::PING_REQ,
                                                                             source,
@@ -369,29 +375,20 @@ bool MP1Node::sendPingReqMsg() {
                                                                             this->protocolPeriodCnt,
                                                                             piggybackMembershipListEntries,
                                                                             piggybackFailListEntries);
+        vector<char> encodedMsg = pingReqMsg->encode();
+        int sizeSent = getEmulNet()->ENsend(&source, &(pingReqTarget.addr), encodedMsg.data(), encodedMsg.size());
+        if(sizeSent == 0) {
+#ifdef DEBUGLOG
+            cout << "sizeSent is 0, pingReqMsg is not sent to target: " << pingReqTarget.getAddress() << endl;
+#endif
+        } else {
+#ifdef DEBUGLOG
+            cout << "sizeSent is " << sizeSent << ", id: " << pingReqMsg->getId() << " will be inserted into pingReqMap." << endl;
+            // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
+            this->pingReqMap.insert(pingReqMsg->getId(), std::string(encodedMsg.begin(), encodedMsg.end()));
+#endif
+        }
     }
-    // TODO: Continue here...
-//     shared_ptr<BaseMessage> pingMsg = make_shared<PingMessage>(MsgTypes::Types::PING,
-//                                                                 source,
-//                                                                 pingTarget.addr,
-//                                                                 currProtocolPeriod,
-//                                                                 respPiggybackMembershipListEntries,
-//                                                                 respPiggybackFailListEntries);
-
-//     vector<char> encodedPing = pingMsg->encode();
-//     int sizeSent = getEmulNet()->ENsend(&source, &(pingTarget.addr), encodedPing.data(), encodedPing.size());
-//     if(sizeSent == 0) {
-// #ifdef DEBUGLOG
-//         cout << "sizeSent is 0, msg is not sent... NOTE that in this case, the pingMap will also be empty!" << endl;
-//         return false;
-// #endif
-//     } else {
-// #ifdef DEBUGLOG
-//         cout << "sizeSent is " << sizeSent << ", id: " << pingMsg->getId() << endl;
-//         // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
-//         this->pingMap.insert(pingMsg->getId(), std::string(encodedPing.begin(), encodedPing.end()));
-// #endif
-//     }
 }
 
 /**
