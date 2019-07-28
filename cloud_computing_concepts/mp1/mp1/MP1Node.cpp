@@ -451,4 +451,10 @@ bool MP1Node::processPiggybackFailList(const vector<FailListEntry>& piggybackFai
     // TODO: @7/27/2019: Fill in this. 
     // Need to remove all the entries from MembershipList if the entry is in piggybackFailList.
     // These removed entries will be inserted into this node's FailList, with piggybackCnt set to 0.
+    for(const auto& failListEntry : piggybackFailList) {
+        
+    }
 }
+
+// The entries that are being suspected can stay for 4 protocol periods before getting moved to failList.
+unsigned long MembershipListEntry::MAX_SUSPECT_TIMEOUT = 4 * MP1Node::PROTOCOL_PERIOD;

@@ -83,20 +83,15 @@ enum MemberTypes {
 };
 
 class Entry {
-protected:
-	// Msg representation for this entry.
-	char* entryMsg;
 public:
 	Address addr;
 	int piggybackCnt;
 
-	Entry() : entryMsg(nullptr), piggybackCnt(0) {}
-	Entry(Address addr) : entryMsg(nullptr), addr(addr), piggybackCnt(0) {}
-	virtual ~Entry() {
-		if(entryMsg) {
-			delete [] entryMsg;
-		}
-	}
+	Entry() : piggybackCnt(0) {}
+	Entry(Address addr) : addr(addr), piggybackCnt(0) {}
+	Entry(const Entry& entry) : addr(entry.addr), piggybackCnt(entry.piggybackCnt) {}
+
+	virtual ~Entry() = default;
 
 	bool operator<(const Entry& rhs) const {
 		return piggybackCnt < rhs.piggybackCnt;
@@ -113,6 +108,10 @@ public:
 	bool reachMaxPiggybackCnt(int maxPiggybackCnt) {
 		return piggybackCnt > maxPiggybackCnt;
 	}
+
+	void clearPiggybackCnt() {
+		piggybackCnt = 0;
+	}
 };
 
 class MembershipListEntry : public Entry {
@@ -122,14 +121,19 @@ protected:
 		return memberTypeStr[(size_t)type];
 	}
 public:
+	static unsigned long MAX_SUSPECT_TIMEOUT;
+
 	MemberTypes type;
 	// NOTE: This incarnationNum is not the same as the member in MP1Node. 
 	// This is the incarnationNum that is received from other nodes.
 	unsigned long incarnationNum;
+	unsigned long suspectTimeout;
 
-	MembershipListEntry() : Entry(), type(MemberTypes::ALIVE), incarnationNum(0) {}
-	MembershipListEntry(Address addr) : Entry(addr), type(MemberTypes::ALIVE), incarnationNum(0) {}
-	MembershipListEntry(Address addr, MemberTypes type, unsigned long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum) {}	
+	MembershipListEntry() : Entry(), type(MemberTypes::ALIVE), incarnationNum(0), suspectTimeout(0) {}
+	MembershipListEntry(Address addr) : Entry(addr), type(MemberTypes::ALIVE), incarnationNum(0), suspectTimeout(0) {}
+	MembershipListEntry(Address addr, MemberTypes type, unsigned long incarnationNum) : Entry(addr), type(type), incarnationNum(incarnationNum), suspectTimeout(0) {}	
+	MembershipListEntry(const MembershipListEntry& entry) : Entry(entry), type(entry.type), incarnationNum(entry.incarnationNum), suspectTimeout(0) {}
+
 	~MembershipListEntry() = default;
 
 	// Get the size of this entry in a message.
@@ -148,6 +152,11 @@ public:
 		msgPtr += sizeof(MemberTypes);
 		memcpy(msgPtr, &(this->incarnationNum), sizeof(long));
 		return entryMsg;
+	}
+
+	void incSuspectTimeout(bool& reachMaxSuspectTime) {
+		suspectTimeout ++;
+		reachMaxSuspectTime = (suspectTimeout == MAX_SUSPECT_TIMEOUT);
 	}
 
 	// Convert a msg back to entry.
@@ -208,34 +217,32 @@ public:
 
 template <typename T>
 class EntryList {
-protected:
-	char* topKMsg;
 public:
 	static std::mt19937::result_type SEED;
 
 	// If we use vector, when we insert element in the vector, all the iterators after the insertion point will be invalidated!
 	vector<T> entryVec;
 	
-	EntryList() : topKMsg(nullptr), entryVec() {}
-	~EntryList() {
-		if(topKMsg) {
-			delete [] topKMsg;
-		}
-	}
+	EntryList() : entryVec() {}
+	~EntryList() = default;
 
 	int getSize() {
 		return entryVec.size();
 	}
 
-	bool removeEntry(const string& address) {
+	bool removeEntry(const Address& address) {
+		return removeEntry(address.getAddress());
+	}
+
+	shared_ptr<T> removeEntry(const string& address) {
 		for(auto it = entryVec.begin(); it != entryVec.end(); it ++) {
 			if(it->getAddress() == address) {
 				entryVec.erase(it);
-				return true;
+				return nullptr;
 			}
 		}
 		cerr << "Address " << address << " is not in list..." << endl;
-		return false; 
+		return nullptr; 
 	}
 
 	static vector<char> encodeTopKMsg(const vector<T>& topEntries) {
