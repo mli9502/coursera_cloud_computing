@@ -642,36 +642,6 @@ public:
 	
 	virtual ~MP1Node();
 
-	pair<unsigned, char*> genPingMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt);
-	pair<unsigned, char*> genPingReqMsg(MembershipListEntry to, MembershipListEntry req, Address idAddr, unsigned long idPeriodCnt);
-	pair<unsigned, char*> genAckMsg(MembershipListEntry to, Address idAddr, unsigned long idPeriodCnt);
-
-	MsgTypes::Types getMsgType(char* msg) {
-		MsgTypes::Types rtn;
-		memcpy(&rtn, msg, sizeof(MsgTypes::Types));
-		return rtn;
-	}
-
-	string getMsgId(char* msg) {
-		msg += sizeof(MsgTypes::Types);
-		Address idAddr;
-		unsigned long idPeriodCnt;
-		memcpy(&idAddr, msg, sizeof(Address));
-		msg += sizeof(Address);
-		memcpy(&idPeriodCnt, msg, sizeof(unsigned long));
-		return getId(idAddr, idPeriodCnt);
-	}
-
-	void decodePingMsg(char* msg, 
-						Address& idAddr, unsigned long& idPeriodCnt,
-						Address& fromAddr, Address& toAddr,
-						vector<MembershipListEntry>& membershipListTopK,
-						vector<FailListEntry>& failListTopK);
-
-	static string getId(Address idAddr, unsigned long idPeriodCnt) {
-		return idAddr.getAddress() + ":" + to_string(idPeriodCnt);
-	}
-
 	// list of members that are currently alive.
 	int getMaxPiggybackCnt();
 	unsigned long getProtocolPeriod() const {
@@ -693,7 +663,9 @@ public:
 
 	void setAckReceived() {
 		this->ackReceived = true;
-	}					
+	}
+	// Process the received FailList.
+	bool processPiggybackFailList(const vector<FailListEntry>& piggybackFailList);
 };
 
 class MsgHelper {
