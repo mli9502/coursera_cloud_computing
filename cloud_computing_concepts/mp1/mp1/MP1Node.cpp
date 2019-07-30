@@ -448,13 +448,27 @@ EmulNet* MP1Node::getEmulNet() {
 }
 
 bool MP1Node::processPiggybackFailList(const vector<FailListEntry>& piggybackFailList) {
-    // TODO: @7/27/2019: Fill in this. 
     // Need to remove all the entries from MembershipList if the entry is in piggybackFailList.
     // These removed entries will be inserted into this node's FailList, with piggybackCnt set to 0.
     for(const auto& failListEntry : piggybackFailList) {
-        
+        shared_ptr<MembershipListEntry> removedEntry = membershipList.removeEntry(failListEntry.addr.getAddress());
+        if(!removedEntry) {
+            #ifdef DEBUGLOG
+            cout << "Found piggyback failList entry: " << failListEntry << " in membership list: " << *removedEntry << endl;
+            #endif
+            // Insert this entry to current node's failList.
+            failList.insertEntry(*removedEntry);
+        }
     }
+    return true;
 }
+
+bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList) {
+    // TODO: @7/30/2019:
+    // We have to distinguish between ALIVE and SUSPECT type of entries.
+    return true;
+}
+
 
 // The entries that are being suspected can stay for 4 protocol periods before getting moved to failList.
 unsigned long MembershipListEntry::MAX_SUSPECT_TIMEOUT = 4 * MP1Node::PROTOCOL_PERIOD;

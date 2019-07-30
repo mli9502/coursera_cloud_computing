@@ -237,8 +237,9 @@ public:
 	shared_ptr<T> removeEntry(const string& address) {
 		for(auto it = entryVec.begin(); it != entryVec.end(); it ++) {
 			if(it->getAddress() == address) {
+				shared_ptr<T> rtn = make_shared<T>(*it);
 				entryVec.erase(it);
-				return nullptr;
+				return rtn;
 			}
 		}
 		cerr << "Address " << address << " is not in list..." << endl;
@@ -515,6 +516,7 @@ public:
 		}
 		entryVec.push_back(FailListEntry(newEntry));
 		entryVec.back().piggybackCnt = 0;
+
 		return true;
 	}
 
@@ -673,6 +675,8 @@ public:
 	}
 	// Process the received FailList.
 	bool processPiggybackFailList(const vector<FailListEntry>& piggybackFailList);
+	// Process the received MembershipList.
+	bool processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList);
 };
 
 class MsgHelper {
