@@ -466,6 +466,53 @@ bool MP1Node::processPiggybackFailList(const vector<FailListEntry>& piggybackFai
 bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList) {
     // TODO: @7/30/2019:
     // We have to distinguish between ALIVE and SUSPECT type of entries.
+    for(const auto& entry : piggybackMembershipList) {
+        auto localEntryPtr = membershipList.containsNode(entry.addr);
+        // If entry is not in current node's membershipList, just insert it.
+        if(localEntryPtr == nullptr) {
+            membershipList.insertEntryAtRandom(entry);
+        } else {
+            // If the received entry is of type ALIVE.
+            if(entry.type == MemberTypes::ALIVE) {
+                // If local entry is also ALIVE.
+                if(localEntryPtr->type == MemberTypes::ALIVE) {
+                    // Update local incarnation if we receive a higher incarnation.
+                    // And clear the piggybackCnt at the same time.
+                    // {Alive Ml, inc = i} overrides {Alive Ml, inc = j} given [i > j].
+                    if(entry.incarnationNum > localEntryPtr->incarnationNum) {
+                        localEntryPtr->incarnationNum = entry.incarnationNum;
+                        localEntryPtr->piggybackCnt = 0;
+                    }
+                } else {
+                    // If local entry is currently marked SUSPECT.
+                    // {Alive Ml, inc = i} overrides {Suspect Ml, inc = j} given [i > j].
+                    if(entry.incarnationNum > localEntryPtr->incarnationNum) {
+                        localEntryPtr->type = MemberTypes::ALIVE;
+                        localEntryPtr->incarnationNum = entry.incarnationNum;
+                        localEntryPtr->piggybackCnt = 0;
+                    }
+                }
+            } else {
+                // If the received entry is of type SUSPECT.
+                // TODO: Need to check if Node itself is being suspected.
+                // {Suspect Ml, inc = i} overrides {Alive Ml, inc = j} given [i >= j].
+                if(localEntryPtr->type == MemberTypes::ALIVE) {
+                    if(entry.incarnationNum >= localEntryPtr->incarnationNum) {
+                        localEntryPtr->type = MemberTypes::SUSPECT;
+                        localEntryPtr->incarnationNum = entry.incarnationNum;
+                        localEntryPtr->piggybackCnt = 0;
+                    }
+                } else {
+                    // {Suspect Ml, inc = i} overrides {Alive Ml, inc = j} given [i > j].
+                    if(entry.incarnationNum > localEntryPtr->incarnationNum) {
+                        localEntryPtr->incarnationNum = entry.incarnationNum;
+                        localEntryPtr->piggybackCnt = 0;
+                    }
+                }
+            }
+        }
+    }
+    // TODO: Need to handle the case of receiving Node itself as SUSPECT.
     return true;
 }
 

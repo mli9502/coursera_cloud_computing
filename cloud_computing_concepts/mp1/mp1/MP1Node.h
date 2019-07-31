@@ -359,6 +359,16 @@ public:
 	MembershipList() : EntryList(), lastPingIdx(0) {}
 	~MembershipList() = default;
 
+	// Check if a node is already in the list.
+	shared_ptr<MembershipListEntry> containsNode(const Address& addr) {
+		for(auto& entry : this->entryVec) {
+			if(entry.getAddress() == addr.getAddress()) {
+				return shared_ptr<MembershipListEntry>(&entry);
+			}
+		}
+		return nullptr;
+	}
+
 	bool appendEntry(const Address& addr) {
 		return appendEntry(MembershipListEntry(addr));
 	}
