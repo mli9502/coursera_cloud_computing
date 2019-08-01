@@ -463,9 +463,8 @@ bool MP1Node::processPiggybackFailList(const vector<FailListEntry>& piggybackFai
     return true;
 }
 
+// TODO: @7/31/2019: Need to make sure that for Node itself is in its MembershipList.
 bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList) {
-    // TODO: @7/30/2019:
-    // We have to distinguish between ALIVE and SUSPECT type of entries.
     for(const auto& entry : piggybackMembershipList) {
         auto localEntryPtr = membershipList.containsNode(entry.addr);
         // If entry is not in current node's membershipList, just insert it.
@@ -474,6 +473,10 @@ bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& 
         } else {
             // If the received entry is of type ALIVE.
             if(entry.type == MemberTypes::ALIVE) {
+                // If the entry is the node itself, we don't have to do anything.
+                if(entry.addr.getAddress() == this->getMemberNode()->addr.getAddress()) {
+                    continue;
+                }
                 // If local entry is also ALIVE.
                 if(localEntryPtr->type == MemberTypes::ALIVE) {
                     // Update local incarnation if we receive a higher incarnation.
@@ -494,7 +497,14 @@ bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& 
                 }
             } else {
                 // If the received entry is of type SUSPECT.
-                // TODO: Need to check if Node itself is being suspected.
+                // First, we check if the node itself is being suspected.
+                if(entry.addr.getAddress() == this->getMemberNode()->addr.getAddress()) {
+                    // Increase incarnation number at this node.
+                    this->incarnationNum ++;
+                    localEntryPtr->incarnationNum = this->incarnationNum;
+                    localEntryPtr->piggybackCnt = 0;
+                    continue;
+                }
                 // {Suspect Ml, inc = i} overrides {Alive Ml, inc = j} given [i >= j].
                 if(localEntryPtr->type == MemberTypes::ALIVE) {
                     if(entry.incarnationNum >= localEntryPtr->incarnationNum) {
@@ -516,6 +526,13 @@ bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& 
     return true;
 }
 
+bool MP1Node::processPiggybackLists(const vector<MembershipListEntry>& piggybackMemershipList,
+                                    const vector<FailListEntry>& piggybackFailList) {
+    // We need to make sure piggybackFailList is being processed first.
+    bool failSuccess = this->processPiggybackFailList(piggybackFailList);
+    bool memberSuccess = this->processPiggybackMembershipList(piggybackMemershipList);
+    return failSuccess && memberSuccess;
+}
 
 // The entries that are being suspected can stay for 4 protocol periods before getting moved to failList.
 unsigned long MembershipListEntry::MAX_SUSPECT_TIMEOUT = 4 * MP1Node::PROTOCOL_PERIOD;

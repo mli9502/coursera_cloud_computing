@@ -54,7 +54,10 @@ bool AckMessage::onReceiveHandler(MP1Node& node) {
     cout << "PingReqPingMap at Node: " << nodeAddr << " is: " << endl;
     node.getPingReqPingMap().print();
 #endif
-    // First check if id is in pingMap.
+    // First handle the piggyback lists.
+    node.processPiggybackLists(this->piggybackMembershipList, this->piggybackFailList);
+
+    // Then, check if id is in pingMap.
     if(node.getPingMap().contains(getId())) {
 #ifdef DEBUGLOG
         cout << "Found id: " << getId() << " in pingMap at node: " << node.getMemberNode()->addr.getAddress() << endl;

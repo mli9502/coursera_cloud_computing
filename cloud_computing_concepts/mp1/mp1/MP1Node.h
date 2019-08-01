@@ -627,6 +627,11 @@ private:
 	bool sendPingMsg();
 	bool sendPingReqMsg();
 
+	// Process the received FailList.
+	bool processPiggybackFailList(const vector<FailListEntry>& piggybackFailList);
+	// Process the received MembershipList.
+	bool processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList);
+
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
 	Member * getMemberNode() {
@@ -683,10 +688,9 @@ public:
 	void setAckReceived() {
 		this->ackReceived = true;
 	}
-	// Process the received FailList.
-	bool processPiggybackFailList(const vector<FailListEntry>& piggybackFailList);
-	// Process the received MembershipList.
-	bool processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList);
+	// Process piggyback lists.
+	bool processPiggybackLists(const vector<MembershipListEntry>& piggybackMembershipList, 
+								const vector<FailListEntry>& piggybackFailList);
 };
 
 class MsgHelper {
