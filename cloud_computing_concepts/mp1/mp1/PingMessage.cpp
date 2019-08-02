@@ -61,23 +61,7 @@ bool PingMessage::onReceiveHandler(MP1Node& node) {
 #ifdef DEBUGLOG
     cout << "In PingMessage::onReceiveHandler at node: " << node.getMemberNode()->addr.getAddress() << endl;
 #endif
-
-    // Update the membershipList and failList in current node using the piggyback lists.
-    // TODO: Do we have to handle the case where we receive an entry in membership list, 
-    //       but this address is already marked fail in current node's fail list?
-    // TODO:
-    // Two cases need to be considered here:
-    // - Node is in the received membershipList, and also in curr node's failList.
-    // - Node is in the received failList, and also in curr node's membershipList.
-    // TODO: When we send ACK message back, we need to decode the ID from the source msg.
-    //          And use the protocolPeriodCnt from the source msg to construct the ID of the ACK msg.
-    //          By doing this, we can make sure that this ID matches at the source side.
-    for(auto& entry : piggybackMembershipList) {
-        node.getMembershipList().insertEntryAtRandom(entry);
-    }
-    for(auto& entry : piggybackFailList) {
-        node.getFailList().insertEntry(entry);
-    }
+    node.processPiggybackLists(piggybackMembershipList, piggybackFailList);
 
     vector<MembershipListEntry> respPiggybackMembershipListEntries = node.getMembershipList().getTopK(node.K, node.getMaxPiggybackCnt());
     vector<FailListEntry> respPiggybackFailListEntries = node.getFailList().getTopK(node.K, node.getMaxPiggybackCnt());

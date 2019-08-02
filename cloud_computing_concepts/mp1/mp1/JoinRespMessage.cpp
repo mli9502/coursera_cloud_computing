@@ -39,15 +39,7 @@ bool JoinRespMessage::onReceiveHandler(MP1Node& node) {
 #ifdef DEBUGLOG
     cout << "In JoinRespMessage::onReceiveHandler at node: " << node.getMemberNode()->addr.getAddress() << endl;
 #endif
-
-    // Insert all the MembershipListNode and FailListNode.
-    for(auto& entry : piggybackMembershipList) {
-        node.getMembershipList().appendEntry(entry);
-    }
-    for(auto& entry : piggybackFailList) {
-        node.getFailList().insertEntry(entry);
-    }
-
+    node.processPiggybackLists(piggybackMembershipList, piggybackFailList);
     return true;
 }
 
