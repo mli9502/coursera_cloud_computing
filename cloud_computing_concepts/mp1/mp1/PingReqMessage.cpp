@@ -1,5 +1,7 @@
 #include "PingReqMessage.h"
 
+#include "PingMessage.h"
+
 string PingReqMessage::getId() {
     return source.getAddress() + "|" + route.getAddress() + "|" + destination.getAddress() + "|" + to_string(protocol_period);
 }
@@ -60,10 +62,33 @@ void PingReqMessage::printMsg() {
 }
 
 bool PingReqMessage::onReceiveHandler(MP1Node& node) {
-    // TODO: fill this in.
 #ifdef DEBUGLOG
     cout << "In PingReqMessage::onReceiveHandler..." << endl;
 #endif
+    node.processPiggybackLists(this->piggybackMembershipList, this->piggybackFailList);
+    
+    vector<MembershipListEntry> respPiggybackMembershipListEntries = node.getMembershipList().getTopK(node.K, node.getMaxPiggybackCnt());
+    vector<FailListEntry> respPiggybackFailListEntries = node.getFailList().getTopK(node.K, node.getMaxPiggybackCnt());
+
+    // Send Ping msg to destination node, and record the ID of this Ping msg and source into pingReqPing map.
+    shared_ptr<BaseMessage> pingMsg = make_shared<PingMessage>(MsgTypes::PING, 
+                                                                route, 
+                                                                destination, 
+                                                                protocol_period, 
+                                                                respPiggybackMembershipListEntries, 
+                                                                respPiggybackFailListEntries);
+    node.getPingReqPingMap().insert(pingMsg->getId(), source);
+    vector<char> encodedPing = pingMsg->encode();
+    int sizeSent = node.getEmulNet()->ENsend(&route, &destination, encodedPing.data(), encodedPing.size());
+    if(sizeSent == 0) {
+#ifdef DEBUGLOG
+        cout << "sizeSent is 0, msg is not sent..." << endl;
+#endif
+    } else {
+#ifdef DEBUGLOG
+        cout << "sizeSent is " << sizeSent << endl;
+#endif
+    }
     return true;
 }
 

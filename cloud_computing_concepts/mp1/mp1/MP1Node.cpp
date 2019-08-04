@@ -345,7 +345,7 @@ bool MP1Node::sendPingMsg() {
 #ifdef DEBUGLOG
         cout << "sizeSent is " << sizeSent << ", id: " << pingMsg->getId() << endl;
         // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
-        this->pingMap.insert(pingMsg->getId(), std::string(encodedPing.begin(), encodedPing.end()));
+        this->pingMap.insert(pingMsg->getId(), pingMsg->getSrc());
 #endif
     }
 }
@@ -384,8 +384,8 @@ bool MP1Node::sendPingReqMsg() {
         } else {
 #ifdef DEBUGLOG
             cout << "sizeSent is " << sizeSent << ", id: " << pingReqMsg->getId() << " will be inserted into pingReqMap." << endl;
-            // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
-            this->pingReqMap.insert(pingReqMsg->getId(), std::string(encodedMsg.begin(), encodedMsg.end()));
+            // Insert this id into pingReqMap so we can latter check to see if we successfully receive ack.
+            this->pingReqMap.insert(pingReqMsg->getId(), pingReqMsg->getSrc());
 #endif
         }
     }

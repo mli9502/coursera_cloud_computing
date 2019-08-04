@@ -77,8 +77,8 @@ bool PingMessage::onReceiveHandler(MP1Node& node) {
                                                             respPiggybackMembershipListEntries,
                                                             respPiggybackFailListEntries);
 
-    vector<char> encodedPing = ackMsg->encode();
-    int sizeSent = node.getEmulNet()->ENsend(&newSource, &newDestination, encodedPing.data(), encodedPing.size());
+    vector<char> encodedAck = ackMsg->encode();
+    int sizeSent = node.getEmulNet()->ENsend(&newSource, &newDestination, encodedAck.data(), encodedAck.size());
     if(sizeSent == 0) {
 #ifdef DEBUGLOG
         cout << "sizeSent is 0, msg is not sent..." << endl;

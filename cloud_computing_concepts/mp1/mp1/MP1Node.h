@@ -607,22 +607,25 @@ private:
 	// TODO: In constructor, need to set this to false.
 	bool ackReceived;
 	// pingMap, pingReqMap and pingReqPingMap stores the outstanding msgs that we sent out.
-	// key: ID, val: msg we sent
-	// ID = src_ip|dest_ip|protocol_period_cnt
-	// pingMap: The initial ping message we send every protocol period. 
-	// When we send a ping msg, the id will be recorded in this map.
-	// When we receive an Ack msg, we need to remove the corresponding entry from the map.
-	// Since we only send one Ping at each protocol period, this map should be empty if we receive a direct Ack from target.
-	TimeoutMap<string, string> pingMap;
-	// pingReqMap: The ping_req msgs we send out after the initial ping request times out.
-	// NOTE: there might be multiple PingReq msg that we could send at each protocol period.
-	// As a result, every time we receive an Ack message, do the following:
-	// - First check if sourceId == currPingId. If yes, remove the entry from pingMap. mark ackReceived to true.
+	// Every time we receive an Ack message, do the following:
+	// - First check if sourceId is in pingMap. If yes, remove the entry from pingMap. mark ackReceived to true.
 	// - Then, check if sourceId is in pingReqMap. If yes, remove the entry from pingMap, mark ackReceived to true.
 	// - Then, check if sourceId is in pingReqPingMap. If yes, redirect the Ack msg by sending an Ack to the node that sends the PingReq.
-	TimeoutMap<string, string> pingReqMap;
+	
+	// ID: src_ip|dest_ip|protocol_period_cnt
+
+	// key: ID
+	// val: curr node's address. (val will not be used)
+	// pingMap: The initial ping message we send every protocol period.
+	TimeoutMap<string, Address> pingMap;
+	// pingReqMap: The ping_req msgs we send out after the initial ping request times out.
+	// key: ID
+	// val: curr node's address. (val will not be used)
+	TimeoutMap<string, Address> pingReqMap;
 	// pingReqPingMap: The ping msgs we send out after we receives a ping_req msg. 
-	TimeoutMap<string, string> pingReqPingMap;
+	// key: ID
+	// val: the Address of the source address that we eventually need to send an ACK msg to.
+	TimeoutMap<string, Address> pingReqPingMap;
 
 	bool sendPingMsg();
 	bool sendPingReqMsg();
@@ -675,13 +678,13 @@ public:
 		return this->incarnationNum;
 	}
 
-	TimeoutMap<string, string>& getPingMap() {
+	TimeoutMap<string, Address>& getPingMap() {
 		return this->pingMap;
 	}	
-	TimeoutMap<string, string>& getPingReqMap() {
+	TimeoutMap<string, Address>& getPingReqMap() {
 		return this->pingReqMap;
 	}
-	TimeoutMap<string, string>& getPingReqPingMap() {
+	TimeoutMap<string, Address>& getPingReqPingMap() {
 		return this->pingReqPingMap;
 	}
 
