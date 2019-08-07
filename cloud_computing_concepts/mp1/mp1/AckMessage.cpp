@@ -78,7 +78,7 @@ bool AckMessage::onReceiveHandler(MP1Node& node) {
         vector<MembershipListEntry> respPiggybackMembershipListEntries = node.getMembershipList().getTopK(node.K, node.getMaxPiggybackCnt());
         vector<FailListEntry> respPiggybackFailListEntries = node.getFailList().getTopK(node.K, node.getMaxPiggybackCnt());
 
-        Address pingReqSource = node.getPingReqPingMap().get(getId());
+        Address pingReqSource = *(node.getPingReqPingMap().get(getId()));
         shared_ptr<BaseMessage> ackMsg = make_shared<AckMessage>(MsgTypes::ACK,
                                                                     node.getMemberNode()->addr,
                                                                     pingReqSource,

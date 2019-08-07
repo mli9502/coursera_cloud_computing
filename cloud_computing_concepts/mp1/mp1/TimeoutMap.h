@@ -38,7 +38,7 @@ public:
     // no-op if key is not in the map.
     void update(const K& key, const V& val, bool resetTTL = false);
     // Get the value with key.
-    V get(const K& key);
+    V* get(const K& key);
 
     // Erase the given key from map.
     // no-op if key does not exist.
@@ -86,8 +86,11 @@ void TimeoutMap<K, V>::update(const K& key, const V& val, bool resetTTL) {
 }
 
 template <typename K, typename V>
-V TimeoutMap<K, V>::get(const K& key) {
-    return internal[key].first;
+V* TimeoutMap<K, V>::get(const K& key) {
+    if(!contains(key)) {
+        return nullptr;
+    }
+    return &(internal[key].first);
 }
 
 template <typename K, typename V>
