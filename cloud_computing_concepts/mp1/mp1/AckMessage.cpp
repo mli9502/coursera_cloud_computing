@@ -72,7 +72,31 @@ bool AckMessage::onReceiveHandler(MP1Node& node) {
         node.setAckReceived();
     } else if(node.getPingReqPingMap().contains(getId())) {
         // Route ACK back to source.
-        
+#ifdef DEBUGLOG
+        cout << "Found id: " << getId() << " in pingReqPingMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
+#endif
+        vector<MembershipListEntry> respPiggybackMembershipListEntries = node.getMembershipList().getTopK(node.K, node.getMaxPiggybackCnt());
+        vector<FailListEntry> respPiggybackFailListEntries = node.getFailList().getTopK(node.K, node.getMaxPiggybackCnt());
+
+        Address pingReqSource = node.getPingReqPingMap().get(getId());
+        shared_ptr<BaseMessage> ackMsg = make_shared<AckMessage>(MsgTypes::ACK,
+                                                                    node.getMemberNode()->addr,
+                                                                    pingReqSource,
+                                                                    this->protocol_period,
+                                                                    this->incarnation,
+                                                                    respPiggybackMembershipListEntries,
+                                                                    respPiggybackFailListEntries);
+        vector<char> encodedAck = ackMsg->encode();
+        int sizeSent = node.getEmulNet()->ENsend(&node.getMemberNode()->addr, &pingReqSource, encodedAck.data(), encodedAck.size());
+        if(sizeSent == 0) {
+    #ifdef DEBUGLOG
+            cout << "sizeSent is 0, msg is not sent..." << endl;
+    #endif
+        } else {
+    #ifdef DEBUGLOG
+            cout << "sizeSent is " << sizeSent << endl;
+    #endif
+        }    
     }
 
     return true;

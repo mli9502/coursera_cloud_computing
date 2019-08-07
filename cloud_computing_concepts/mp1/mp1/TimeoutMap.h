@@ -37,6 +37,8 @@ public:
     // Update the val for the given key.
     // no-op if key is not in the map.
     void update(const K& key, const V& val, bool resetTTL = false);
+    // Get the value with key.
+    V get(const K& key);
 
     // Erase the given key from map.
     // no-op if key does not exist.
@@ -77,10 +79,15 @@ void TimeoutMap<K, V>::update(const K& key, const V& val, bool resetTTL) {
 #endif        
         return;
     }
-    internal[key]->first = val;
+    internal[key].first = val;
     if(resetTTL) {
-        internal[key]->second = 0;
+        internal[key].second = 0;
     }
+}
+
+template <typename K, typename V>
+V TimeoutMap<K, V>::get(const K& key) {
+    return internal[key].first;
 }
 
 template <typename K, typename V>
@@ -107,11 +114,13 @@ void TimeoutMap<K, V>::tick() {
     }
 }
 
+// TODO: Need to either fix this, or remove this.
+// currently, V has to be type Address...
 template <typename K, typename V>
 void TimeoutMap<K, V>::print() {
     cout << "##### ##### #####" << endl;
     for(auto& entry : internal) {
-        cout << entry.first << ": " << "(" << entry.second.first << ", " << entry.second.second << ")" << endl;
+        cout << entry.first << ": " << "(" << entry.second.first.getAddress() << ", " << entry.second.second << ")" << endl;
     }
 }
 

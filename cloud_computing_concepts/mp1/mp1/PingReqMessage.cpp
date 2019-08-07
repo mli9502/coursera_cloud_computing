@@ -3,7 +3,8 @@
 #include "PingMessage.h"
 
 string PingReqMessage::getId() {
-    return source.getAddress() + "|" + route.getAddress() + "|" + destination.getAddress() + "|" + to_string(protocol_period);
+    // Note that in here, we ignore the destination address, because when we receive ACK for this message, we receive it from route, not destination.
+    return source.getAddress() + "|" + route.getAddress() + "|" + to_string(protocol_period);
 }
 
 void PingReqMessage::decode(const vector<char>& msg) {

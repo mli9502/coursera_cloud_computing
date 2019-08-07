@@ -57,7 +57,6 @@ void PingMessage::printMsg() {
 }
 
 bool PingMessage::onReceiveHandler(MP1Node& node) {
-    // TODO: fill this in.
 #ifdef DEBUGLOG
     cout << "In PingMessage::onReceiveHandler at node: " << node.getMemberNode()->addr.getAddress() << endl;
 #endif
