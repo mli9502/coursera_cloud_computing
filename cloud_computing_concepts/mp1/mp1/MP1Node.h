@@ -604,7 +604,6 @@ private:
 	// Will be incremented every recvLoop.
 	unsigned protocolPeriodLocalCounter;
 	Address currPingTarget;
-	// TODO: In constructor, need to set this to false.
 	bool ackReceived;
 	// pingMap, pingReqMap and pingReqPingMap stores the outstanding msgs that we sent out.
 	// Every time we receive an Ack message, do the following:

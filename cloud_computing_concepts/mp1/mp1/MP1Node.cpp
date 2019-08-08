@@ -45,9 +45,9 @@ const int MP1Node::NUM_PING_REQ_TARGETS = 5;
  */
 MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Address *address) : 
                     incarnationNum(0),
-                    failList(),
-                    membershipList(),
                     protocolPeriodCnt(0),
+                    protocolPeriodLocalCounter(0),
+                    ackReceived(false),
                     pingMap(PING_TIMEOUT),
                     pingReqMap(PING_REQ_TIMEOUT),
                     pingReqPingMap(PING_REQ_TIMEOUT) {
