@@ -14,9 +14,6 @@ protected:
     void SetUp() override {
         _tm.insert("id0", Address{"0:0"});
         _tm.insert("id1", Address{"1:1"});
-        _tm.insert("id2", Address{"2:2"});
-        _tm.insert("id3", Address{"3:3"});
-        _tm.insert("id4", Address{"4:4"});
     }
 
     TimeoutMap<string, Address> _tm;
@@ -28,8 +25,8 @@ TEST_F(TimeoutMapTestFixture, TestContains) {
 }
 
 TEST_F(TimeoutMapTestFixture, TestInsert) {
-    _tm.insert("id5", Address{"5:5"});
-    ASSERT_TRUE(_tm.contains("id5"));
+    _tm.insert("id2", Address{"2:2"});
+    ASSERT_TRUE(_tm.contains("id2"));
 }
 
 TEST_F(TimeoutMapTestFixture, TestGet) {
@@ -38,4 +35,17 @@ TEST_F(TimeoutMapTestFixture, TestGet) {
 
     val = _tm.get("random_id");
     ASSERT_EQ(val, nullptr);
+}
+
+TEST_F(TimeoutMapTestFixture, TestUpdate) {
+    _tm.update("id0", Address{"5:5"}, false);
+    ASSERT_EQ(_tm.get("id0")->getAddress(), "5:5");
+}
+
+TEST_F(TimeoutMapTestFixture, TestTick) {
+    for(int i = 0; i < 5; i ++) {
+        _tm.tick();
+    }
+    ASSERT_FALSE(_tm.contains("id0"));
+    ASSERT_FALSE(_tm.contains("id1"));
 }

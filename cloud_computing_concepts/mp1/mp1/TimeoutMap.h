@@ -21,8 +21,8 @@ using namespace std;
 template <typename K, typename V>
 class TimeoutMap {
 public:
-    TimeoutMap(int ttl) : ttl(ttl) {}
-    TimeoutMap(const vector<pair<K, V>>& list, int ttl) : ttl(ttl) {
+    TimeoutMap(unsigned ttl) : ttl(ttl) {}
+    TimeoutMap(const vector<pair<K, V>>& list, unsigned ttl) : ttl(ttl) {
         for(const auto& p : list) {
             internal[p.first] = {p.second, 0};
         }
@@ -50,7 +50,7 @@ public:
 
 private:
     // the underlying datastructure.
-    map<K, pair<V, int>> internal;
+    map<K, pair<V, unsigned>> internal;
     // time-to-live.
     unsigned ttl;
 };
@@ -106,13 +106,15 @@ void TimeoutMap<K, V>::erase(const K& key) {
 
 template <typename K, typename V>
 void TimeoutMap<K, V>::tick() {
-    for(auto& entry : internal) {
-        entry.second.second ++;
-        if(entry.second.second >= ttl) {
+    for(auto it = internal.begin(); it != internal.end(); ) {
+        it->second.second ++;
+        if(it->second.second >= ttl) {
 #ifdef DEBUGLOG
-            cout << "evict entry: [" << entry.first << ": " << "(" << entry.second.first << ", " << entry.second.second << ")]" << endl;
-#endif            
-            erase(entry.first);
+            cout << "evict entry: [" << it->first << ": " << "(" << it->second.first << ", " << it->second.second.getAddress() << ")]" << endl;
+#endif  
+            it = internal.erase(it);            
+        } else {
+            it ++;
         }
     }
 }
