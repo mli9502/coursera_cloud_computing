@@ -204,6 +204,8 @@ int MP1Node::finishUpThisNode(){
    /*
     * Your code goes here
     */
+   // TODO: Do we need to add stuff in here?
+   return 0;
 }
 
 /**

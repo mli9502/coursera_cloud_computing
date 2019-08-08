@@ -42,10 +42,22 @@ TEST_F(TimeoutMapTestFixture, TestUpdate) {
     ASSERT_EQ(_tm.get("id0")->getAddress(), "5:5");
 }
 
+// This is how tick works.
+// If the ttl is set to 5, then, at the 5th tick, the entry will be evicted.
 TEST_F(TimeoutMapTestFixture, TestTick) {
     for(int i = 0; i < 5; i ++) {
+        if(i == 3) {
+            _tm.insert("id2", Address{"2:2"});
+        }
         _tm.tick();
     }
     ASSERT_FALSE(_tm.contains("id0"));
     ASSERT_FALSE(_tm.contains("id1"));
+    ASSERT_TRUE(_tm.contains("id2"));
+    _tm.tick();
+    ASSERT_TRUE(_tm.contains("id2"));
+    _tm.tick();
+    ASSERT_TRUE(_tm.contains("id2"));
+    _tm.tick();
+    ASSERT_FALSE(_tm.contains("id2"));
 }
