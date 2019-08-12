@@ -370,25 +370,12 @@ public:
 		return nullptr;
 	}
 
+	// Note that appendEntry will not check for duplicate.
 	bool appendEntry(const Address& addr) {
 		return appendEntry(MembershipListEntry(addr));
 	}
 
 	bool appendEntry(MembershipListEntry newEntry) {
-		cerr << "appending: " << newEntry << endl;
-		for(auto& entry : this->entryVec) {
-			if(newEntry.getAddress() == entry.getAddress()) {
-				cerr << "Entry is already presented in membership list: " << endl;
-				cerr << "Entry in list: " << entry << endl;
-				cerr << "Received entry: " << newEntry << endl;
-				if(isOverride(newEntry, entry)) {
-					entry.type = newEntry.type;
-					entry.incarnationNum = newEntry.incarnationNum;
-					return true;
-				}
-				return false;
-			}
-		}
 		entryVec.push_back(newEntry);
 		return true;
 	}
@@ -404,19 +391,6 @@ public:
 	// If the address is new, this means that a new entry has joined. And we insert this new entry into a random location in the list.
 	bool insertEntryAtRandom(MembershipListEntry newEntry) {
 		cerr << "inserting: " << newEntry << endl;
-		for(auto& entry : this->entryVec) {
-			if(newEntry.getAddress() == entry.getAddress()) {
-				cerr << "Entry is already presented in membership list: " << endl;
-				cerr << "Entry in list: " << entry << endl;
-				cerr << "Received entry: " << newEntry << endl;
-				if(isOverride(newEntry, entry)) {
-					entry.type = newEntry.type;
-					entry.incarnationNum = newEntry.incarnationNum;
-					return true;
-				}
-				return false;
-			}
-		}
 		int randIdx = 0;
 		if(!entryVec.empty()) {
 			int left = 0, right = entryVec.size() - 1;
@@ -481,22 +455,6 @@ public:
 		rtn = entryVec[lastPingIdx];
 		lastPingIdx ++;
 		return true;
-	}
-
-private:
-	bool isOverride(const MembershipListEntry& newEntry, const MembershipListEntry& oldEntry) {
-		auto newType = newEntry.type, oldType = oldEntry.type;
-		auto newIncarnation = newEntry.incarnationNum, oldIncarnation = oldEntry.incarnationNum;
-		if(newType == MemberTypes::ALIVE) {
-			return (oldType == MemberTypes::SUSPECT && newIncarnation > oldIncarnation) ||
-					(oldType == MemberTypes::ALIVE && newIncarnation > oldIncarnation);
-		} else if(newType == MemberTypes::SUSPECT) {
-			return (oldType == MemberTypes::SUSPECT && newIncarnation > oldIncarnation) ||
-					(oldType == MemberTypes::ALIVE && newIncarnation >= oldIncarnation);
-		} else if(newType == MemberTypes::FAIL) {
-			return oldType == MemberTypes::ALIVE || oldType == MemberTypes::SUSPECT;
-		}
-		return false;
 	}
 };
 

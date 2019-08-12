@@ -20,8 +20,6 @@ Application::Application(char *infile) {
 	en = new EmulNet(par);
 	mp1 = (MP1Node **) malloc(par->EN_GPSZ * sizeof(MP1Node *));
 
-	cout << "@mli: Application constructor after constructing mp1." << endl;
-
 	/*
 	 * Init all nodes
 	 */

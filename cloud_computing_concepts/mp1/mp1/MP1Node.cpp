@@ -62,9 +62,6 @@ MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Addres
 	this->par = params;
 	this->memberNode->addr = *address;
     // Insert the current node into membership list.
-#ifdef DEBUGLOG
-    cout << "Adding " << memberNode->addr.getAddress() << " to the membershipList of itself." << endl;
-#endif
     this->membershipList.appendEntry(memberNode->addr);
 }
 
@@ -477,7 +474,6 @@ bool MP1Node::processPiggybackFailList(const vector<FailListEntry>& piggybackFai
     return true;
 }
 
-// TODO: @7/31/2019: Need to make sure that for Node itself is in its MembershipList.
 bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList) {
     for(const auto& entry : piggybackMembershipList) {
         auto localEntryPtr = membershipList.containsNode(entry.addr);
