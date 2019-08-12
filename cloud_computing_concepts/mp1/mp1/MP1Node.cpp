@@ -28,6 +28,8 @@ ostream& operator<<(ostream& os, const FailListEntry& rhs) {
 /*
  * Note: You can change/add any functions in MP1Node.{h,cpp}
  */
+// TODO: Need to update this PING_TIMEOUT. 
+// 2 is two small...
 const long MP1Node::PING_TIMEOUT = 2;
 const long MP1Node::PING_REQ_TIMEOUT = 2 * MP1Node::PING_TIMEOUT;
 const long MP1Node::PROTOCOL_PERIOD = MP1Node::PING_TIMEOUT + MP1Node::PING_REQ_TIMEOUT + 2;
@@ -285,17 +287,20 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
  * 				Propagate your membership list
  */
 void MP1Node::nodeLoopOps() {
+    cerr << "In MP1Node::nodeLoopOps: protocolPeriodLocalCounter: " << this->protocolPeriodLocalCounter << endl;
     this->updatePeriod();
     // TODO: @7/20/2019: When receive JoinResp message, we probably don't need to send out Ack message.
     //                   We can wait until the start of the next protocolPeriod.
-
     // If this is the start of a protocolPeriod, start sending Ping message.
     if(this->protocolPeriodLocalCounter == 0) {
         // TODO: In here, we need to clear the entries with previous protocolPeriod out of the TimeoutMap.
+        cerr << "Before seding out ping message..." << endl;
         this->sendPingMsg();
-    } else if(this->protocolPeriodLocalCounter == PING_TIMEOUT) {
+    } else if(this->protocolPeriodLocalCounter == PING_TIMEOUT && !this->ackReceived) {
+        cerr << "Before sending out pingReq message..." << endl;
         this->sendPingReqMsg();
     } else if(this->protocolPeriodLocalCounter == PROTOCOL_PERIOD - 1) {
+        cerr << "At the end of protocol period: " << this->protocolPeriodCnt << endl;
         // If the ack is not received, need to either mark this node as suspeced, or mark it as failed.
         if(!this->ackReceived) {
 
@@ -353,15 +358,22 @@ bool MP1Node::sendPingMsg() {
 }
 
 bool MP1Node::sendPingReqMsg() {
+    cerr << "In sendPingReqMsg..." << endl;
+
     Address source = getMemberNode()->addr;
 
     vector<MembershipListEntry> piggybackMembershipListEntries = getMembershipList().getTopK(K, getMaxPiggybackCnt());
     vector<FailListEntry> piggybackFailListEntries = getFailList().getTopK(K, getMaxPiggybackCnt());
 
+    cerr << "After getting piggybackMembershipList and piggybackFailList..." << endl;
+
     unsigned long currProtocolPeriod = getProtocolPeriod();
 
+    cerr << "currProtocolPeriod: " << currProtocolPeriod << endl;
+
     // Select K targets to send PingReq message.
-    vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source, this->currPingTarget);    
+    vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source, this->currPingTarget);
+
 #ifdef DEBUGLOG
     cout << "PingReq targets selected: " << endl;
     for(const auto& pingReqTarget : pingReqTargets) {
@@ -524,7 +536,6 @@ bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& 
             }
         }
     }
-    // TODO: Need to handle the case of receiving Node itself as SUSPECT.
     return true;
 }
 

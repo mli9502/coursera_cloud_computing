@@ -2,6 +2,8 @@
 
 #include "PingMessage.h"
 
+#include <memory>
+
 string PingReqMessage::getId() {
     // Note that in here, we ignore the destination address, because when we receive ACK for this message, we receive it from route, not destination.
     return source.getAddress() + "|" + route.getAddress() + "|" + to_string(protocol_period);

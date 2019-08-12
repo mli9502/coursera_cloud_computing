@@ -40,6 +40,7 @@ bool JoinRespMessage::onReceiveHandler(MP1Node& node) {
     cout << "In JoinRespMessage::onReceiveHandler at node: " << node.getMemberNode()->addr.getAddress() << endl;
 #endif
     node.processPiggybackLists(piggybackMembershipList, piggybackFailList);
+    cerr << "Before JoinRespMessage::onReceiveHandler return..." << endl;
     return true;
 }
 

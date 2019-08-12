@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <list>
 #include <random>
+#include <memory>
 
 // #define TEST
 
@@ -360,10 +361,10 @@ public:
 	~MembershipList() = default;
 
 	// Check if a node is already in the list.
-	shared_ptr<MembershipListEntry> containsNode(const Address& addr) {
+	MembershipListEntry* containsNode(const Address& addr) {
 		for(auto& entry : this->entryVec) {
 			if(entry.getAddress() == addr.getAddress()) {
-				return shared_ptr<MembershipListEntry>(&entry);
+				return &entry;
 			}
 		}
 		return nullptr;
@@ -445,8 +446,10 @@ public:
 		this->reorderVec(tmpVec);
 		auto it = tmpVec.begin();
 		while(rtn.size() < K && it != tmpVec.end()) {
-			// Skip node itself and the pingTarget that we already send PingMsg to.
-			if(it->first.addr == selfAddr || it->first.addr == pingTargetAddr) {
+			// Skip the pingTarget that we already send PingMsg to.
+			// Note that we can't skip the node itself, because it's possible that the current node is being suspected and need to be included in the piggybackList.
+			if(it->first.addr == pingTargetAddr) {
+				it ++;
 				continue;
 			}
 			rtn.push_back(it->first);
