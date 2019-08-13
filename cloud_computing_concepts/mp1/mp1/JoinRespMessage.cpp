@@ -36,27 +36,23 @@ void JoinRespMessage::decode(const vector<char>& msg) {
 }
 
 bool JoinRespMessage::onReceiveHandler(MP1Node& node) {
-#ifdef DEBUGLOG
-    cout << "In JoinRespMessage::onReceiveHandler at node: " << node.getMemberNode()->addr.getAddress() << endl;
-#endif
     node.processPiggybackLists(piggybackMembershipList, piggybackFailList);
-    cerr << "Before JoinRespMessage::onReceiveHandler return..." << endl;
     return true;
 }
 
 void JoinRespMessage::printMsg() {
-    cout << "########## JoinRespMessage ##########" << endl;
-    cout << "# message type: " << MsgTypes::to_string(msgType) << endl;
-    cout << "# id: " << getId() << endl;
-    cout << "# source: " << source.getAddress() << endl;
-    cout << "# destination: " << destination.getAddress() << endl;
-    cout << "# coordinator membershipList: " << endl;
+    cerr << "\t########## JoinRespMessage ##########" << endl;
+    cerr << "\t# message type: " << MsgTypes::to_string(msgType) << endl;
+    cerr << "\t# id: " << getId() << endl;
+    cerr << "\t# source: " << source.getAddress() << endl;
+    cerr << "\t# destination: " << destination.getAddress() << endl;
+    cerr << "\t# coordinator membershipList: " << endl;
     for(auto& entry : piggybackMembershipList) {
-        cout << "# " << entry << endl;
+        cerr << "\t# " << entry << endl;
     }
-    cout << "# coordinator failList: " << endl;
+    cerr << "\t# coordinator failList: " << endl;
     for(auto& entry : piggybackFailList) {
-        cout << "# " << entry << endl;
+        cerr << "\t# " << entry << endl;
     }
-    cout << "########## ########## #########" << endl;
+    cerr << "\t########## ########## #########" << endl;
 }

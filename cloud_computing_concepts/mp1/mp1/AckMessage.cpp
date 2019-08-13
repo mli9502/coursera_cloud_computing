@@ -44,16 +44,6 @@ vector<char> AckMessage::encode() {
 
 bool AckMessage::onReceiveHandler(MP1Node& node) {
     auto nodeAddr = node.getMemberNode()->addr.getAddress();
-#ifdef DEBUGLOG
-    cout << "In AckMessage::onReceiveHandler at node: " << nodeAddr << endl;
-    cout << "Received Ack msg id: " << getId() << " from Node: " << this->source.getAddress() << " at Node: " << nodeAddr << endl;
-    cout << "PingMap at Node: " << nodeAddr << " is: " << endl;
-    node.getPingMap().print();
-    cout << "PingReqMap at Node: " << nodeAddr << " is: " << endl;
-    node.getPingReqMap().print();
-    cout << "PingReqPingMap at Node: " << nodeAddr << " is: " << endl;
-    node.getPingReqPingMap().print();
-#endif
     // First handle the piggyback lists.
     node.processPiggybackLists(this->piggybackMembershipList, this->piggybackFailList);
 
@@ -92,31 +82,27 @@ bool AckMessage::onReceiveHandler(MP1Node& node) {
     #ifdef DEBUGLOG
             cout << "sizeSent is 0, msg is not sent..." << endl;
     #endif
-        } else {
-    #ifdef DEBUGLOG
-            cout << "sizeSent is " << sizeSent << endl;
-    #endif
-        }    
+        }   
     }
 
     return true;
 }
 
 void AckMessage::printMsg() {
-    cout << "########## AckMessage ##########" << endl;
-    cout << "# message type: " << MsgTypes::to_string(msgType) << endl;
-    cout << "# id: " << getId() << endl;
-    cout << "# source: " << source.getAddress() << endl;
-    cout << "# destination: " << destination.getAddress() << endl;
-    cout << "# protocol_period: " << protocol_period << endl;
-    cout << "# incarnation: " << incarnation << endl;
-    cout << "# piggybackMembershipList: " << endl;
+    cout << "\t########## AckMessage ##########" << endl;
+    cout << "\t# message type: " << MsgTypes::to_string(msgType) << endl;
+    cout << "\t# id: " << getId() << endl;
+    cout << "\t# source: " << source.getAddress() << endl;
+    cout << "\t# destination: " << destination.getAddress() << endl;
+    cout << "\t# protocol_period: " << protocol_period << endl;
+    cout << "\t# incarnation: " << incarnation << endl;
+    cout << "\t# piggybackMembershipList: " << endl;
     for(auto& entry : piggybackMembershipList) {
-        cout << "# " << entry << endl;
+        cout << "\t# " << entry << endl;
     }
-    cout << "# piggybackFailList: " << endl;
+    cout << "\t# piggybackFailList: " << endl;
     for(auto& entry : piggybackFailList) {
-        cout << "# " << entry << endl;
+        cout << "\t# " << entry << endl;
     }
-    cout << "########## ########## #########" << endl;
+    cout << "\t########## ########## #########" << endl;
 }

@@ -35,9 +35,6 @@ void JoinReqMessage::decode(const vector<char>& msg) {
 // On receive, the membershipList and failList of node (which should be the coordinator), 
 // will be taken and insert into JoinResp message to send to the newly joined node.
 bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
-#ifdef DEBUGLOG
-    cout << "In JoinReqMessage::onReceiveHandler at Node: " << destination.getAddress() << endl;
-#endif
     node.getMembershipList().appendEntry(source);
     // Construct a JoinResp message.
     // The destination in the decoded message is now source, and source is now destination.
@@ -55,19 +52,15 @@ bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
 #ifdef DEBUGLOG
         cout << "sizeSent is 0, msg is not sent..." << endl;
 #endif
-    } else {
-#ifdef DEBUGLOG
-        cout << "sizeSent is " << sizeSent << endl;
-#endif
     }
     return true;
 }
 
 void JoinReqMessage::printMsg() {
-    cout << "########## JoinReqMessage ##########" << endl;
-    cout << "# message type: " << MsgTypes::to_string(msgType) << endl;
-    cout << "# id: " << getId() << endl;
-    cout << "# source: " << source.getAddress() << endl;
-    cout << "# destination: " << destination.getAddress() << endl;
-    cout << "########## ########## #########" << endl;
+    cout << "\t########## JoinReqMessage ##########" << endl;
+    cout << "\t# message type: " << MsgTypes::to_string(msgType) << endl;
+    cout << "\t# id: " << getId() << endl;
+    cout << "\t# source: " << source.getAddress() << endl;
+    cout << "\t# destination: " << destination.getAddress() << endl;
+    cout << "\t########## ########## #########" << endl;
 }

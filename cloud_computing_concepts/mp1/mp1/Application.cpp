@@ -65,7 +65,7 @@ int Application::run()
 	// As time runs along
 	for( par->globaltime = 0; par->globaltime < TOTAL_RUNNING_TIME; ++par->globaltime ) {
 		// Run the membership protocol
-		cout << "@mli: ---------------------- time: " << par->globaltime << " ----------------------" << endl;
+		cerr << "---------------------- time: " << par->globaltime << " ----------------------" << endl;
 		mp1Run();
 		// Fail some nodes
 		fail();
@@ -130,9 +130,7 @@ void Application::mp1Run() {
 		if( par->getcurrtime() == (int)(par->STEP_RATE*i) ) {
 			// introduce the ith node into the system at time STEP_RATE*i
 			mp1[i]->nodeStart(JOINADDR, par->PORTNUM);
-			// @mli: log timestamp.
-			cout << "@mli: ts==>[" << par->getcurrtime() << "]: " << endl;
-			cout<<i<<"-th introduced node is assigned with the address: "<<mp1[i]->getMemberNode()->addr.getAddress() << endl;
+			cerr << "Introducing " << i << "-th node with address: " << mp1[i]->getMemberNode()->addr.getAddress() << endl;
 			nodeCount += i;
 		}
 

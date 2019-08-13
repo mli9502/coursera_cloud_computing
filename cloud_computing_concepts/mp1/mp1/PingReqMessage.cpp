@@ -46,28 +46,25 @@ vector<char> PingReqMessage::encode() {
 }
 
 void PingReqMessage::printMsg() {
-    cout << "########## PingReqMessage ##########" << endl;
-    cout << "# message type: " << MsgTypes::to_string(msgType) << endl;
-    cout << "# id: " << getId() << endl;
-    cout << "# source: " << source.getAddress() << endl;
-    cout << "# route: " << route.getAddress() << endl;
-    cout << "# destination: " << destination.getAddress() << endl;
-    cout << "# protocol_period: " << protocol_period << endl;
-    cout << "# piggybackMembershipList: " << endl;
+    cout << "\t########## PingReqMessage ##########" << endl;
+    cout << "\t# message type: " << MsgTypes::to_string(msgType) << endl;
+    cout << "\t# id: " << getId() << endl;
+    cout << "\t# source: " << source.getAddress() << endl;
+    cout << "\t# route: " << route.getAddress() << endl;
+    cout << "\t# destination: " << destination.getAddress() << endl;
+    cout << "\t# protocol_period: " << protocol_period << endl;
+    cout << "\t# piggybackMembershipList: " << endl;
     for(auto& entry : piggybackMembershipList) {
-        cout << "# " << entry << endl;
+        cout << "\t# " << entry << endl;
     }
-    cout << "# piggybackFailList: " << endl;
+    cout << "\t# piggybackFailList: " << endl;
     for(auto& entry : piggybackFailList) {
-        cout << "# " << entry << endl;
+        cout << "\t# " << entry << endl;
     }
-    cout << "########## ########## #########" << endl;
+    cout << "\t########## ########## #########" << endl;
 }
 
 bool PingReqMessage::onReceiveHandler(MP1Node& node) {
-#ifdef DEBUGLOG
-    cout << "In PingReqMessage::onReceiveHandler..." << endl;
-#endif
     node.processPiggybackLists(this->piggybackMembershipList, this->piggybackFailList);
     
     vector<MembershipListEntry> respPiggybackMembershipListEntries = node.getMembershipList().getTopK(node.K, node.getMaxPiggybackCnt());
@@ -86,10 +83,6 @@ bool PingReqMessage::onReceiveHandler(MP1Node& node) {
     if(sizeSent == 0) {
 #ifdef DEBUGLOG
         cout << "sizeSent is 0, msg is not sent..." << endl;
-#endif
-    } else {
-#ifdef DEBUGLOG
-        cout << "sizeSent is " << sizeSent << endl;
 #endif
     }
     return true;

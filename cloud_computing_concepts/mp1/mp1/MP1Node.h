@@ -390,7 +390,6 @@ public:
 	// If the address of the entry is already present in the list, we update the entry using override rules.
 	// If the address is new, this means that a new entry has joined. And we insert this new entry into a random location in the list.
 	bool insertEntryAtRandom(MembershipListEntry newEntry) {
-		cerr << "inserting: " << newEntry << endl;
 		int randIdx = 0;
 		if(!entryVec.empty()) {
 			int left = 0, right = entryVec.size() - 1;

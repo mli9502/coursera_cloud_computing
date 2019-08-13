@@ -262,7 +262,6 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
 	 */
 
     MsgTypes::Types msgType = MessageDecoder::getTypeFromMsg(data, size);
-    cerr << "Received msg type: " << MsgTypes::to_string(msgType) << " at Node: " << this->memberNode->addr.getAddress() << endl;
     shared_ptr<BaseMessage> msg = MessageDecoder::decode(data, size);
     if(!msg) {
 #ifdef DEBUGLOG
@@ -270,9 +269,10 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
 #endif
         return false;
     }
-#ifdef DEBUGLOG
+    cerr << "Received msg type: " << MsgTypes::to_string(msgType) 
+        << " at Node: " << this->memberNode->addr.getAddress() 
+        << " from Node: " << msg->getSrc().getAddress() << endl;
     msg->printMsg();
-#endif
     return msg->onReceiveHandler(*this);
 }
 
@@ -284,20 +284,19 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
  * 				Propagate your membership list
  */
 void MP1Node::nodeLoopOps() {
-    cerr << "In MP1Node::nodeLoopOps: protocolPeriodLocalCounter: " << this->protocolPeriodLocalCounter << endl;
     this->updatePeriod();
     // TODO: @7/20/2019: When receive JoinResp message, we probably don't need to send out Ack message.
     //                   We can wait until the start of the next protocolPeriod.
     // If this is the start of a protocolPeriod, start sending Ping message.
     if(this->protocolPeriodLocalCounter == 0) {
         // TODO: In here, we need to clear the entries with previous protocolPeriod out of the TimeoutMap.
-        cerr << "Before seding out ping message..." << endl;
+        cerr << "Before seding out ping message at protocol period: " << protocolPeriodCnt << endl;
         this->sendPingMsg();
     } else if(this->protocolPeriodLocalCounter == PING_TIMEOUT && !this->ackReceived) {
-        cerr << "Before sending out pingReq message..." << endl;
+        cerr << "Before sending out pingReq message at protocol period: " << protocolPeriodCnt << endl;
         this->sendPingReqMsg();
     } else if(this->protocolPeriodLocalCounter == PROTOCOL_PERIOD - 1) {
-        cerr << "At the end of protocol period: " << this->protocolPeriodCnt << endl;
+        cerr << "At the end of protocol period: " << protocolPeriodCnt << endl;
         // If the ack is not received, need to either mark this node as suspeced, or mark it as failed.
         if(!this->ackReceived) {
 
