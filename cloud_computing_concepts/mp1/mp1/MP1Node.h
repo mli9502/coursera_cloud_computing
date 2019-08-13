@@ -312,9 +312,9 @@ public:
 		return rtn;
 	}
 	
-	void printVec() {
+	void printVec(const string& prefix = "") {
 		for(auto& entry : this->entryVec) {
-			cout << entry << endl;
+			cout << prefix << entry << endl;
 		}
 	}
 	/**
@@ -420,8 +420,7 @@ public:
 		auto it = tmpVec.begin();
 		while(rtn.size() < K && it != tmpVec.end()) {
 			// Skip the pingTarget that we already send PingMsg to.
-			// Note that we can't skip the node itself, because it's possible that the current node is being suspected and need to be included in the piggybackList.
-			if(it->first.addr == pingTargetAddr) {
+			if(it->first.addr == pingTargetAddr || it->first.addr == selfAddr) {
 				it ++;
 				continue;
 			}
@@ -593,6 +592,8 @@ private:
 	bool processPiggybackFailList(const vector<FailListEntry>& piggybackFailList);
 	// Process the received MembershipList.
 	bool processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList);
+
+	void dumpMembershipAndFailLists();
 
 public:
 	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);

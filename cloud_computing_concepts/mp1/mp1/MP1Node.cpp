@@ -48,7 +48,7 @@ const int MP1Node::NUM_PING_REQ_TARGETS = 5;
 MP1Node::MP1Node(Member *member, Params *params, EmulNet *emul, Log *log, Address *address) : 
                     incarnationNum(0),
                     protocolPeriodCnt(0),
-                    protocolPeriodLocalCounter(0),
+                    protocolPeriodLocalCounter(-1),
                     ackReceived(false),
                     pingMap(PING_TIMEOUT),
                     pingReqMap(PING_REQ_TIMEOUT),
@@ -284,12 +284,15 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
  * 				Propagate your membership list
  */
 void MP1Node::nodeLoopOps() {
+    // TODO: @8/12/2019: Need to make sure that all the nodes are calling this method...
     this->updatePeriod();
     // TODO: @7/20/2019: When receive JoinResp message, we probably don't need to send out Ack message.
     //                   We can wait until the start of the next protocolPeriod.
     // If this is the start of a protocolPeriod, start sending Ping message.
     if(this->protocolPeriodLocalCounter == 0) {
         // TODO: In here, we need to clear the entries with previous protocolPeriod out of the TimeoutMap.
+        // In fact, we can just clear the pingMap.
+        // Can also clear pingReqMap, but we can't clear pingReqPing map since this map does not follow local protocol period.
         cerr << "Before seding out ping message at protocol period: " << protocolPeriodCnt << endl;
         this->sendPingMsg();
     } else if(this->protocolPeriodLocalCounter == PING_TIMEOUT && !this->ackReceived) {
@@ -297,6 +300,7 @@ void MP1Node::nodeLoopOps() {
         this->sendPingReqMsg();
     } else if(this->protocolPeriodLocalCounter == PROTOCOL_PERIOD - 1) {
         cerr << "At the end of protocol period: " << protocolPeriodCnt << endl;
+        dumpMembershipAndFailLists();
         // If the ack is not received, need to either mark this node as suspeced, or mark it as failed.
         if(!this->ackReceived) {
 
@@ -319,17 +323,11 @@ bool MP1Node::sendPingMsg() {
     // Select a pingTarget from membershipList to send Ping msg.
     bool rc = getMembershipList().getPingTarget(pingTarget, source);
     if(!rc) {
-#ifdef DEBUGLOG
-        cout << "getPingTarget failed at node: " << source.getAddress() << " ..." << endl;
-#endif
+        cerr << "getPingTarget failed at node: " << source.getAddress() << " ..." << endl;
         return false;
     }
     this->currPingTarget = pingTarget.addr;
-#ifdef DEBUGLOG
-        cout << "Selected Ping target: " << pingTarget.getAddress() << " at Node: " << source.getAddress() << endl;
-        cout << "Sending Ping msg to: " << pingTarget.getAddress() << endl;
-#endif
-
+    cerr << "Selected Ping target: " << pingTarget.getAddress() << " at Node: " << source.getAddress() << endl;
     shared_ptr<BaseMessage> pingMsg = make_shared<PingMessage>(MsgTypes::Types::PING,
                                                                 source,
                                                                 pingTarget.addr,
@@ -340,28 +338,20 @@ bool MP1Node::sendPingMsg() {
     vector<char> encodedPing = pingMsg->encode();
     int sizeSent = getEmulNet()->ENsend(&source, &(pingTarget.addr), encodedPing.data(), encodedPing.size());
     if(sizeSent == 0) {
-#ifdef DEBUGLOG
-        cout << "sizeSent is 0, msg is not sent... NOTE that in this case, the pingMap will also be empty!" << endl;
+        cerr << "sizeSent is 0, msg is not sent... NOTE that in this case, the pingMap will also be empty!" << endl;
         return false;
-#endif
     } else {
-#ifdef DEBUGLOG
-        cout << "sizeSent is " << sizeSent << ", id: " << pingMsg->getId() << endl;
+        cerr << "Ping sent with id: " << pingMsg->getId() << endl;
         // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
         this->pingMap.insert(pingMsg->getId(), pingMsg->getSrc());
-#endif
     }
 }
 
 bool MP1Node::sendPingReqMsg() {
-    cerr << "In sendPingReqMsg..." << endl;
-
     Address source = getMemberNode()->addr;
 
     vector<MembershipListEntry> piggybackMembershipListEntries = getMembershipList().getTopK(K, getMaxPiggybackCnt());
     vector<FailListEntry> piggybackFailListEntries = getFailList().getTopK(K, getMaxPiggybackCnt());
-
-    cerr << "After getting piggybackMembershipList and piggybackFailList..." << endl;
 
     unsigned long currProtocolPeriod = getProtocolPeriod();
 
@@ -371,9 +361,9 @@ bool MP1Node::sendPingReqMsg() {
     vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source, this->currPingTarget);
 
 #ifdef DEBUGLOG
-    cout << "PingReq targets selected: " << endl;
+    cout << "PingReq targets selected at node: " << source.getAddress() << endl;
     for(const auto& pingReqTarget : pingReqTargets) {
-        cout << pingReqTarget.getAddress() << " at Node: " << source.getAddress() << endl;
+        cout << "\t" << pingReqTarget.getAddress() << endl;
     }
 #endif
     for(auto& pingReqTarget : pingReqTargets) {
@@ -540,6 +530,15 @@ bool MP1Node::processPiggybackLists(const vector<MembershipListEntry>& piggyback
     bool failSuccess = this->processPiggybackFailList(piggybackFailList);
     bool memberSuccess = this->processPiggybackMembershipList(piggybackMemershipList);
     return failSuccess && memberSuccess;
+}
+
+void MP1Node::dumpMembershipAndFailLists() {
+    cerr << "\t\t************** " << getMemberNode()->addr.getAddress() <<" **************" << endl;
+    cerr << "\t\t* MembershipList:" << endl;
+    membershipList.printVec("\t\t* ");
+    cerr << "\t\t* FailList:" << endl;
+    failList.printVec("\t\t* ");
+    cerr << "\t\t************** *** **************" << endl;
 }
 
 // The entries that are being suspected can stay for 4 protocol periods before getting moved to failList.
