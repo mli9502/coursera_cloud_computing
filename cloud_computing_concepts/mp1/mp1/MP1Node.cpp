@@ -284,7 +284,6 @@ bool MP1Node::recvCallBack(void *env, char *data, int size) {
  * 				Propagate your membership list
  */
 void MP1Node::nodeLoopOps() {
-    // TODO: @8/12/2019: Need to make sure that all the nodes are calling this method...
     this->updatePeriod();
     // TODO: @7/20/2019: When receive JoinResp message, we probably don't need to send out Ack message.
     //                   We can wait until the start of the next protocolPeriod.

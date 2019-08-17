@@ -37,6 +37,8 @@ void JoinRespMessage::decode(const vector<char>& msg) {
 
 bool JoinRespMessage::onReceiveHandler(MP1Node& node) {
     node.processPiggybackLists(piggybackMembershipList, piggybackFailList);
+    // Mark this node as in group.
+    node.getMemberNode()->inGroup = true;
     return true;
 }
 
