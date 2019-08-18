@@ -123,6 +123,8 @@ void Application::mp1Run() {
 	// @mli: 
 	// This loop loops from the END to START.
 	// In this loop, a node will either be started or nodeLoop will be called to process the received msgs. 
+	// Due to the fact that the node at joinaddr() could be marked as failed, all nodes need to join before it fails.
+	// The fail starts at t == 100. So, all the nodes need to be in group before this.
 	for( i = par->EN_GPSZ - 1; i >= 0; i-- ) {
 		/*
 		 * Introduce nodes into the distributed system

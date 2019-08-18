@@ -302,7 +302,7 @@ void MP1Node::nodeLoopOps() {
         dumpMembershipAndFailLists();
         // If the ack is not received, need to either mark this node as suspeced, or mark it as failed.
         if(!this->ackReceived) {
-
+            
         }
         // TODO: In here, we check if we have received an ack msg.
     }
@@ -336,13 +336,16 @@ bool MP1Node::sendPingMsg() {
 
     vector<char> encodedPing = pingMsg->encode();
     int sizeSent = getEmulNet()->ENsend(&source, &(pingTarget.addr), encodedPing.data(), encodedPing.size());
+    // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
+    // In the case that the msg is not successfully sent, we sould still update the map.
+    // e.g.: Given the case that all nodes will drop all messages, each node should mark all the other nodes as failed.
+    this->pingMap.insert(pingMsg->getId(), pingMsg->getSrc());
     if(sizeSent == 0) {
-        cerr << "sizeSent is 0, msg is not sent... NOTE that in this case, the pingMap will also be empty!" << endl;
+        cerr << "sizeSent is 0, msg is not sent... NOTE that in this case, the pingMap will still be updated!" << endl;
         return false;
     } else {
         cerr << "Ping sent with id: " << pingMsg->getId() << endl;
-        // Insert this id into pingMap so we can latter check to see if we successfully receive ack.
-        this->pingMap.insert(pingMsg->getId(), pingMsg->getSrc());
+        return true;
     }
 }
 
@@ -359,12 +362,11 @@ bool MP1Node::sendPingReqMsg() {
     // Select K targets to send PingReq message.
     vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source, this->currPingTarget);
 
-#ifdef DEBUGLOG
-    cout << "PingReq targets selected at node: " << source.getAddress() << endl;
+    cerr << "PingReq targets selected at node: " << source.getAddress() << endl;
     for(const auto& pingReqTarget : pingReqTargets) {
-        cout << "\t" << pingReqTarget.getAddress() << endl;
+        cerr << "\t" << pingReqTarget.getAddress() << endl;
     }
-#endif
+
     for(auto& pingReqTarget : pingReqTargets) {
         // Build PingReqMsg.
         shared_ptr<BaseMessage> pingReqMsg = make_shared<PingReqMessage>(MsgTypes::Types::PING_REQ,
@@ -376,16 +378,12 @@ bool MP1Node::sendPingReqMsg() {
                                                                             piggybackFailListEntries);
         vector<char> encodedMsg = pingReqMsg->encode();
         int sizeSent = getEmulNet()->ENsend(&source, &(pingReqTarget.addr), encodedMsg.data(), encodedMsg.size());
+        // Insert this id into pingReqMap so we can latter check to see if we successfully receive ack.
+        this->pingReqMap.insert(pingReqMsg->getId(), pingReqMsg->getSrc());
         if(sizeSent == 0) {
-#ifdef DEBUGLOG
-            cout << "sizeSent is 0, pingReqMsg is not sent to target: " << pingReqTarget.getAddress() << endl;
-#endif
+            cerr << "sizeSent is 0, pingReqMsg is not sent to target: " << pingReqTarget.getAddress() << endl;
         } else {
-#ifdef DEBUGLOG
             cout << "sizeSent is " << sizeSent << ", id: " << pingReqMsg->getId() << " will be inserted into pingReqMap." << endl;
-            // Insert this id into pingReqMap so we can latter check to see if we successfully receive ack.
-            this->pingReqMap.insert(pingReqMsg->getId(), pingReqMsg->getSrc());
-#endif
         }
     }
 }

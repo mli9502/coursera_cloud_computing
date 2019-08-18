@@ -101,6 +101,7 @@ int EmulNet::ENsend(Address *myaddr, Address *toaddr, char *data, int size) {
 	if( (emulnet.currbuffsize >= ENBUFFSIZE) 
 		|| (size + (int)sizeof(en_msg) >= par->MAX_MSG_SIZE) 
 		|| (par->dropmsg && sendmsg < (int) (par->MSG_DROP_PROB * 100)) ) {
+		cerr << "@mli: msg dropped at node: " << myaddr->getAddress() << endl;
 		return 0;
 	}
 
