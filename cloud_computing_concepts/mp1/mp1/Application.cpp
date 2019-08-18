@@ -170,6 +170,7 @@ void Application::fail() {
 	if( par->SINGLE_FAILURE && par->getcurrtime() == 100 ) {
 		removed = (rand() % par->EN_GPSZ);
 		#ifdef DEBUGLOG
+		cerr << mp1[removed]->getMemberNode()->addr.getAddress() << ": Marked as failed at time = " << par->getcurrtime() << endl;
 		log->LOG(&mp1[removed]->getMemberNode()->addr, "Node failed at time=%d", par->getcurrtime());
 		#endif
 		mp1[removed]->getMemberNode()->bFailed = true;
@@ -178,6 +179,7 @@ void Application::fail() {
 		removed = rand() % par->EN_GPSZ/2;
 		for ( i = removed; i < removed + par->EN_GPSZ/2; i++ ) {
 			#ifdef DEBUGLOG
+			cerr << mp1[i]->getMemberNode()->addr.getAddress() << ": Marked as failed at time = " << par->getcurrtime() << endl;
 			log->LOG(&mp1[i]->getMemberNode()->addr, "Node failed at time = %d", par->getcurrtime());
 			#endif
 			mp1[i]->getMemberNode()->bFailed = true;
