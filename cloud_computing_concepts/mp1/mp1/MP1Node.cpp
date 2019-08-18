@@ -501,9 +501,19 @@ bool MP1Node::processPiggybackFailList(const vector<FailListEntry>& piggybackFai
     return true;
 }
 
-bool MP1Node::processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList) {
+bool MP1Node::processPiggybackMembershipList(vector<MembershipListEntry> piggybackMembershipList) {
+    // Remove entry from piggybackMembershipList that is alreay in current node's failList.
+    for(auto it = piggybackMembershipList.begin(); it != piggybackMembershipList.end();) {
+        if(failList.contains(it->getAddress())) {
+            cerr << "piggybackMembershipList Entry: [" << *it << "] "
+                << "is alreay in node: " << getMemberNode()->addr.getAddress() << "'s failList." << endl;
+            it = piggybackMembershipList.erase(it);
+        } else {
+            it ++;
+        }
+    }
     for(const auto& entry : piggybackMembershipList) {
-        auto localEntryPtr = membershipList.containsNode(entry.addr);
+        auto localEntryPtr = membershipList.containsNode(entry.addr); 
         // If entry is not in current node's membershipList, just insert it.
         if(localEntryPtr == nullptr) {
             membershipList.insertEntryAtRandom(entry);

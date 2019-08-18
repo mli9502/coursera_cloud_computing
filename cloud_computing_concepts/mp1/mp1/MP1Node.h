@@ -245,6 +245,19 @@ public:
 		return entryVec.size();
 	}
 
+	bool contains(const Address& address) {
+		return contains(address.getAddress());
+	}
+
+	bool contains(const string& address) {
+		for(const auto& entry : entryVec) {
+			if(entry.getAddress() == address) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	bool removeEntry(const Address& address) {
 		return removeEntry(address.getAddress());
 	}
@@ -455,7 +468,7 @@ public:
 			return false;
 		}
 		// Note that in the current implementation, the very first Ping iteration will not shuffle the list.
-		if(lastPingIdx == entryVec.size()) {
+		if(lastPingIdx >= entryVec.size()) {
 			if(EntryList<MembershipListEntry>::SEED != 0) {
 				std::shuffle(entryVec.begin(), entryVec.end(), std::mt19937{EntryList<MembershipListEntry>::SEED});
 			} else {
@@ -612,7 +625,7 @@ private:
 	// Process the received FailList.
 	bool processPiggybackFailList(const vector<FailListEntry>& piggybackFailList);
 	// Process the received MembershipList.
-	bool processPiggybackMembershipList(const vector<MembershipListEntry>& piggybackMembershipList);
+	bool processPiggybackMembershipList(vector<MembershipListEntry> piggybackMembershipList);
 
 	void dumpMembershipAndFailLists();
 
