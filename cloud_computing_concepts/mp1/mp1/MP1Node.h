@@ -171,6 +171,20 @@ public:
 		return MembershipListEntry(addr, type, incarnationNum);
 	}
 
+	MemberTypes getType() {
+		return type;
+	}
+
+	void markAsSuspected() {
+		this->piggybackCnt = 0;
+		this->type = SUSPECT;
+	}
+	
+	void markAsAlive() {
+		this->piggybackCnt = 0;
+		this->type = ALIVE;
+	}
+
 	friend ostream& operator<<(ostream& os, const MembershipListEntry& rhs);
 };
 // TODO: What should we put in FailListEntry?
@@ -436,6 +450,10 @@ public:
 			cerr << "Membership list is currently empty!" << endl;
 			return false;
 		}
+		if(entryVec.size() == 1 && entryVec[0].addr == selfAddr) {
+			cerr << "Membership list only contain selfAddr!" << endl;
+			return false;
+		}
 		// Note that in the current implementation, the very first Ping iteration will not shuffle the list.
 		if(lastPingIdx == entryVec.size()) {
 			if(EntryList<MembershipListEntry>::SEED != 0) {
@@ -562,7 +580,7 @@ private:
 	// Will be reset to 0 once reach PROTOCOL_PERIOD.
 	// Will be incremented every recvLoop.
 	unsigned protocolPeriodLocalCounter;
-	Address currPingTarget;
+	shared_ptr<Address> currPingTarget;
 	bool ackReceived;
 	// pingMap, pingReqMap and pingReqPingMap stores the outstanding msgs that we sent out.
 	// Every time we receive an Ack message, do the following:
@@ -587,6 +605,9 @@ private:
 
 	bool sendPingMsg();
 	bool sendPingReqMsg();
+
+	void handleSuccessPing();
+	void handleFailedPing();
 
 	// Process the received FailList.
 	bool processPiggybackFailList(const vector<FailListEntry>& piggybackFailList);

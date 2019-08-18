@@ -39,6 +39,9 @@ public:
     void update(const K& key, const V& val, bool resetTTL = false);
     // Get the value with key.
     V* get(const K& key);
+    // Get the iterator to the internal map.
+    typename map<K, pair<V, unsigned>>::iterator begin();
+    typename map<K, pair<V, unsigned>>::iterator end();
 
     // Erase the given key from map.
     // no-op if key does not exist.
@@ -117,6 +120,16 @@ void TimeoutMap<K, V>::tick() {
             it ++;
         }
     }
+}
+
+template <typename K, typename V>
+typename map<K, pair<V, unsigned>>::iterator TimeoutMap<K, V>::begin() {
+    return internal.begin();
+}
+
+template <typename K, typename V>
+typename map<K, pair<V, unsigned>>::iterator TimeoutMap<K, V>::end() {
+    return internal.end();
 }
 
 // TODO: Need to either fix this, or remove this.

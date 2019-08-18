@@ -292,22 +292,59 @@ void MP1Node::nodeLoopOps() {
         // TODO: In here, we need to clear the entries with previous protocolPeriod out of the TimeoutMap.
         // In fact, we can just clear the pingMap.
         // Can also clear pingReqMap, but we can't clear pingReqPing map since this map does not follow local protocol period.
-        cerr << "Before seding out ping message at protocol period: " << protocolPeriodCnt << endl;
+        cerr << "Before sending out ping message at protocol period: " << protocolPeriodCnt << endl;
         this->sendPingMsg();
     } else if(this->protocolPeriodLocalCounter == PING_TIMEOUT && !this->ackReceived) {
         cerr << "Before sending out pingReq message at protocol period: " << protocolPeriodCnt << endl;
         this->sendPingReqMsg();
     } else if(this->protocolPeriodLocalCounter == PROTOCOL_PERIOD - 1) {
         cerr << "At the end of protocol period: " << protocolPeriodCnt << endl;
-        dumpMembershipAndFailLists();
         // If the ack is not received, need to either mark this node as suspeced, or mark it as failed.
         if(!this->ackReceived) {
-            
+            cerr << "Before handleFailedPing at node: " << getMemberNode()->addr.getAddress() << endl;
+            handleFailedPing();
+        } else {
+            cerr << "Before handleSuccessPing at node: " << getMemberNode()->addr.getAddress() << endl;
+            handleSuccessPing();
         }
-        // TODO: In here, we check if we have received an ack msg.
+        dumpMembershipAndFailLists();
+        // Reset ackReceived for next protocol period.
+        this->ackReceived = false;
     }
     // If this is the end of a protocolPeriod, check to see if Ack message has been received.
     return;
+}
+
+void MP1Node::handleSuccessPing() {
+    auto localEntryPtr = membershipList.containsNode(*currPingTarget);
+    if(!localEntryPtr) {
+        cerr << "handleSuccessPing: pingTarget: " << currPingTarget->getAddress() << " is not found in membershipList. Might alreay been marked as failed." << endl;
+    } else {
+        if(localEntryPtr->getType() == SUSPECT) {
+            cerr << "Mark pingTarget: " << currPingTarget->getAddress() << " as ALIVE." << endl;
+            localEntryPtr->markAsAlive();
+        }
+    }
+}
+
+void MP1Node::handleFailedPing() {
+    if(!this->currPingTarget) {
+        cerr << "No pingTarget was selected. No need to handle failed ping..." << endl;
+    }
+    // Check if this node is in membership list.
+    auto localEntryPtr = membershipList.containsNode(*currPingTarget);
+    if(!localEntryPtr) {
+        cerr << "handleFailedPing: pingTarget: " << currPingTarget->getAddress() << " is not found in membershipList. Might alreay been marked as failed." << endl;
+    } else {
+        if(localEntryPtr->getType() == ALIVE) {
+            cerr << "Mark pingTarget: " << currPingTarget->getAddress() << " as SUSPECTED." << endl;
+            localEntryPtr->markAsSuspected();
+        } else {
+            cerr << "Mark pingTarget: " << currPingTarget->getAddress() << " as FAILED." << endl;
+            failList.insertEntry(*localEntryPtr);
+            membershipList.removeEntry(localEntryPtr->getAddress());
+        }
+    }
 }
 
 bool MP1Node::sendPingMsg() {
@@ -325,7 +362,7 @@ bool MP1Node::sendPingMsg() {
         cerr << "getPingTarget failed at node: " << source.getAddress() << " ..." << endl;
         return false;
     }
-    this->currPingTarget = pingTarget.addr;
+    this->currPingTarget = make_shared<Address>(pingTarget.addr);
     cerr << "Selected Ping target: " << pingTarget.getAddress() << " at Node: " << source.getAddress() << endl;
     shared_ptr<BaseMessage> pingMsg = make_shared<PingMessage>(MsgTypes::Types::PING,
                                                                 source,
@@ -350,6 +387,11 @@ bool MP1Node::sendPingMsg() {
 }
 
 bool MP1Node::sendPingReqMsg() {
+    if(!this->currPingTarget) {
+        cerr << "No pingTarget was selected, will not send pingReqMsg." << endl;
+        return true;
+    }
+
     Address source = getMemberNode()->addr;
 
     vector<MembershipListEntry> piggybackMembershipListEntries = getMembershipList().getTopK(K, getMaxPiggybackCnt());
@@ -360,7 +402,7 @@ bool MP1Node::sendPingReqMsg() {
     cerr << "currProtocolPeriod: " << currProtocolPeriod << endl;
 
     // Select K targets to send PingReq message.
-    vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source, this->currPingTarget);
+    vector<MembershipListEntry> pingReqTargets = getMembershipList().getRandomK(NUM_PING_REQ_TARGETS, source, *(this->currPingTarget));
 
     cerr << "PingReq targets selected at node: " << source.getAddress() << endl;
     for(const auto& pingReqTarget : pingReqTargets) {
@@ -372,7 +414,7 @@ bool MP1Node::sendPingReqMsg() {
         shared_ptr<BaseMessage> pingReqMsg = make_shared<PingReqMessage>(MsgTypes::Types::PING_REQ,
                                                                             source,
                                                                             pingReqTarget.addr,
-                                                                            this->currPingTarget,
+                                                                            *(this->currPingTarget),
                                                                             this->protocolPeriodCnt,
                                                                             piggybackMembershipListEntries,
                                                                             piggybackFailListEntries);
@@ -386,6 +428,7 @@ bool MP1Node::sendPingReqMsg() {
             cout << "sizeSent is " << sizeSent << ", id: " << pingReqMsg->getId() << " will be inserted into pingReqMap." << endl;
         }
     }
+    return true;
 }
 
 /**
