@@ -492,10 +492,8 @@ bool MP1Node::processPiggybackFailList(const vector<FailListEntry>& piggybackFai
     // These removed entries will be inserted into this node's FailList, with piggybackCnt set to 0.
     for(const auto& failListEntry : piggybackFailList) {
         shared_ptr<MembershipListEntry> removedEntry = membershipList.removeEntry(failListEntry.addr.getAddress());
-        if(!removedEntry) {
-            #ifdef DEBUGLOG
-            cout << "Found piggyback failList entry: " << failListEntry << " in membership list: " << *removedEntry << endl;
-            #endif
+        if(removedEntry) {
+            cerr << "Found piggyback failList entry: " << failListEntry << " in membership list: " << *removedEntry << endl;
             // Insert this entry to current node's failList.
             failList.insertEntry(*removedEntry);
         }
