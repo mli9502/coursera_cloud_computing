@@ -49,22 +49,16 @@ bool AckMessage::onReceiveHandler(MP1Node& node) {
 
     // Then, check if id is in pingMap.
     if(node.getPingMap().contains(getId())) {
-#ifdef DEBUGLOG
-        cout << "Found id: " << getId() << " in pingMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
-#endif
+        cerr << "Found id: " << getId() << " in pingMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
         node.getPingMap().erase(getId());
         node.setAckReceived();
     } else if(node.getPingReqMap().contains(getId())) {
-#ifdef DEBUGLOG
-        cout << "Found id: " << getId() << " in pingReqMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
-#endif
+        cerr << "Found id: " << getId() << " in pingReqMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
         node.getPingReqMap().erase(getId());
         node.setAckReceived();
     } else if(node.getPingReqPingMap().contains(getId())) {
         // Route ACK back to source.
-#ifdef DEBUGLOG
-        cout << "Found id: " << getId() << " in pingReqPingMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
-#endif
+        cerr << "Found id: " << getId() << " in pingReqPingMap at node: " << node.getMemberNode()->addr.getAddress() << endl;
         vector<MembershipListEntry> respPiggybackMembershipListEntries = node.getMembershipList().getTopK(node.K, node.getMaxPiggybackCnt());
         vector<FailListEntry> respPiggybackFailListEntries = node.getFailList().getTopK(node.K, node.getMaxPiggybackCnt());
 
@@ -79,10 +73,9 @@ bool AckMessage::onReceiveHandler(MP1Node& node) {
         vector<char> encodedAck = ackMsg->encode();
         int sizeSent = node.getEmulNet()->ENsend(&node.getMemberNode()->addr, &pingReqSource, encodedAck.data(), encodedAck.size());
         if(sizeSent == 0) {
-    #ifdef DEBUGLOG
-            cout << "sizeSent is 0, msg is not sent..." << endl;
-    #endif
-        }   
+            cerr << "Ack msg from: " << node.getMemberNode()->addr.getAddress()
+                    << " to: " << pingReqSource.getAddress() << " is not sent." << endl;
+        } 
     }
 
     return true;

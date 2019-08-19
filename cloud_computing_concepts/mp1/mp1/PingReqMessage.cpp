@@ -81,9 +81,8 @@ bool PingReqMessage::onReceiveHandler(MP1Node& node) {
     vector<char> encodedPing = pingMsg->encode();
     int sizeSent = node.getEmulNet()->ENsend(&route, &destination, encodedPing.data(), encodedPing.size());
     if(sizeSent == 0) {
-#ifdef DEBUGLOG
-        cout << "sizeSent is 0, msg is not sent..." << endl;
-#endif
+        cerr << "Ping msg sending from route: " << route.getAddress()
+                << " to: " << destination.getAddress() << " is not sent." << endl;
     }
     return true;
 }

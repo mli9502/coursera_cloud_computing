@@ -36,6 +36,11 @@ void JoinReqMessage::decode(const vector<char>& msg) {
 // will be taken and insert into JoinResp message to send to the newly joined node.
 bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
     node.getMembershipList().appendEntry(source);
+    // We need to log an add here. 
+    // This is special for coordinator node on receiving JoinReq message. 
+    // All the other nodes update their membershipList based on piggybackMembershipList,
+    // however, coordinator node will fill in its membershipList when it receives JoinReq msg using the src of this msg.
+    node.getLogHandle()->logNodeAdd(&(node.getMemberNode()->addr), &source);
     // Construct a JoinResp message.
     // The destination in the decoded message is now source, and source is now destination.
     Address newSource = destination;
@@ -49,9 +54,8 @@ bool JoinReqMessage::onReceiveHandler(MP1Node& node) {
     vector<char> encodedResp = respMsg->encode();
     int sizeSent = node.getEmulNet()->ENsend(&newSource, &newTarget, encodedResp.data(), encodedResp.size());
     if(sizeSent == 0) {
-#ifdef DEBUGLOG
-        cout << "sizeSent is 0, msg is not sent..." << endl;
-#endif
+        cerr << "JoinReq msg from: " << node.getMemberNode()->addr.getAddress()
+                << " to: " << newTarget.getAddress() << " is not sent." << endl;
     }
     return true;
 }

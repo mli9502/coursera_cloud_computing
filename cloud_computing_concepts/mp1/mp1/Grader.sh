@@ -31,7 +31,7 @@ echo "============================"
 if [ $verbose -eq 0 ]; then
 	make clean > /dev/null
 	make > /dev/null
-	./Application testcases/singlefailure.conf > /dev/null
+	./Application testcases/singlefailure.conf &> /dev/null
 else
 	make clean
 	make
@@ -80,7 +80,7 @@ echo "============================"
 if [ $verbose -eq 0 ]; then
 	make clean > /dev/null
 	make > /dev/null
-	./Application testcases/multifailure.conf > /dev/null
+	./Application testcases/multifailure.conf &> /dev/null
 else
 	make clean
 	make
@@ -143,7 +143,7 @@ echo "============================"
 if [ $verbose -eq 0 ]; then
 	make clean > /dev/null
 	make > /dev/null
-	./Application testcases/msgdropsinglefailure.conf > /dev/null
+	./Application testcases/msgdropsinglefailure.conf &> /dev/null
 else
 	make clean
 	make

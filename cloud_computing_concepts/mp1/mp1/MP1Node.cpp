@@ -341,6 +341,7 @@ void MP1Node::handleFailedPing() {
             localEntryPtr->markAsSuspected();
         } else {
             cerr << "Mark pingTarget: " << currPingTarget->getAddress() << " as FAILED." << endl;
+            log->logNodeRemove(&(this->getMemberNode()->addr), currPingTarget.get());
             failList.insertEntry(*localEntryPtr);
             membershipList.removeEntry(localEntryPtr->getAddress());
         }
@@ -378,7 +379,9 @@ bool MP1Node::sendPingMsg() {
     // e.g.: Given the case that all nodes will drop all messages, each node should mark all the other nodes as failed.
     this->pingMap.insert(pingMsg->getId(), pingMsg->getSrc());
     if(sizeSent == 0) {
-        cerr << "sizeSent is 0, msg is not sent... NOTE that in this case, the pingMap will still be updated!" << endl;
+        cerr << "Ping msg from: " << source.getAddress()
+                << " to: " << pingTarget.getAddress() << " is not sent." << endl;
+        cerr << "Note that in this case, the pingMap will still be updated!" << endl;
         return false;
     } else {
         cerr << "Ping sent with id: " << pingMsg->getId() << endl;
@@ -423,7 +426,9 @@ bool MP1Node::sendPingReqMsg() {
         // Insert this id into pingReqMap so we can latter check to see if we successfully receive ack.
         this->pingReqMap.insert(pingReqMsg->getId(), pingReqMsg->getSrc());
         if(sizeSent == 0) {
-            cerr << "sizeSent is 0, pingReqMsg is not sent to target: " << pingReqTarget.getAddress() << endl;
+            cerr << "PingReq msg from: " << source.getAddress()
+                << " to: " << pingReqTarget.addr.getAddress() << " is not sent." << endl;
+            cerr << "Note that in this case, the pingReqMap will still be updated!" << endl;
         } else {
             cout << "sizeSent is " << sizeSent << ", id: " << pingReqMsg->getId() << " will be inserted into pingReqMap." << endl;
         }
@@ -494,6 +499,7 @@ bool MP1Node::processPiggybackFailList(const vector<FailListEntry>& piggybackFai
         shared_ptr<MembershipListEntry> removedEntry = membershipList.removeEntry(failListEntry.addr.getAddress());
         if(removedEntry) {
             cerr << "Found piggyback failList entry: " << failListEntry << " in membership list: " << *removedEntry << endl;
+            log->logNodeRemove(&(this->getMemberNode()->addr), &(removedEntry->addr));
             // Insert this entry to current node's failList.
             failList.insertEntry(*removedEntry);
         }
@@ -517,6 +523,7 @@ bool MP1Node::processPiggybackMembershipList(vector<MembershipListEntry> piggyba
         // If entry is not in current node's membershipList, just insert it.
         if(localEntryPtr == nullptr) {
             membershipList.insertEntryAtRandom(entry);
+            log->logNodeAdd(&(this->getMemberNode()->addr), const_cast<Address*>(&(entry.addr)));
         } else {
             // If the received entry is of type ALIVE.
             if(entry.type == MemberTypes::ALIVE) {

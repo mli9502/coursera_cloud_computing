@@ -30,19 +30,23 @@ DEP_FILES = $(OBJ_FILES:.o=.d)
 
 .PHONY: all main all_tests run_test clean
 
-all: main all_tests
+all: Application all_tests
 
-main: $(OBJ_FILES) $(MAIN_OBJ)
+Application: $(OBJ_FILES) $(MAIN_OBJ)
 	$(CXX) -o $@ $^ $(LD_FLAGS)
 
-run_singlefailure: main
-	./main ./testcases/singlefailure_mli.conf
+run_singlefailure: Application
+	./Application ./testcases/singlefailure_mli.conf
 
 all_tests: $(OBJ_FILES)
 	$(MAKE) -C $(TEST_DIR) all_tests HEADER_DIR=$(abspath $(HEADER_DIR)) SRC_OBJ_DIR=$(abspath $(OBJ_DIR))
 
 run_test: all_tests
 	cd ./test && ./all_tests
+
+run: clean
+	$(MAKE) all
+	./Application
 
 $(MAIN_OBJ): $(MAIN_CPP)
 	$(CXX) -MMD -MP -MF $(@:.o=.d) -MT $@ -c $(CXX_FLAGS) $< -o $@

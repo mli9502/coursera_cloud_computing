@@ -164,6 +164,7 @@ void Application::fail() {
 
 	// fail half the members at time t=400
 	if( par->DROP_MSG && par->getcurrtime() == 50 ) {
+		cerr << "Start dropping msg at time 50..." << endl; 
 		par->dropmsg = 1;
 	}
 
@@ -187,6 +188,7 @@ void Application::fail() {
 	}
 
 	if( par->DROP_MSG && par->getcurrtime() == 300) {
+		cerr << "Stop dropping msg at time 300..." << endl;
 		par->dropmsg=0;
 	}
 

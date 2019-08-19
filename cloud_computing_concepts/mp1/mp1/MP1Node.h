@@ -634,6 +634,10 @@ public:
 	Member * getMemberNode() {
 		return memberNode;
 	}
+	Log* getLogHandle() {
+		return this->log;
+	}
+
 	int recvLoop();
 	static int enqueueWrapper(void *env, char *buff, int size);
 	void nodeStart(char *servaddrstr, short serverport);
