@@ -16,3 +16,4 @@ static void copyObj(char const *& msg, T& field) {
 }
 
 #endif // _UTIL_H_
+

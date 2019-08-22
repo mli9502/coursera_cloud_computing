@@ -68,3 +68,4 @@ void JoinReqMessage::printMsg() {
     cout << "\t# destination: " << destination.getAddress() << endl;
     cout << "\t########## ########## #########" << endl;
 }
+
